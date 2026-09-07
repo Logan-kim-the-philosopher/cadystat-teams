@@ -201,7 +201,10 @@ export function OrganizationFlow({ leader, teams }: OrganizationFlowProps) {
   const { nodes, edges } = React.useMemo(() => buildGraph(leader, teams), [leader, teams]);
 
   return (
-    <div className="h-[760px] w-full overflow-hidden rounded-[32px] border border-slate-200 bg-[#fcfcfd]">
+    <div
+      className="w-full overflow-hidden rounded-[32px] border border-slate-200 bg-[#fcfcfd]"
+      style={{ height: 'clamp(520px, calc(100dvh - 240px), 860px)' }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}

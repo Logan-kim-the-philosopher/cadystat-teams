@@ -390,7 +390,9 @@ function buildGraph(units: OrgUnit[]) {
     [...hierarchyNodeIds]
       .sort((left, right) => memberGraph.node(right).y - memberGraph.node(left).y)
       .forEach((nodeId) => {
-        const children = memberGraph.successors(nodeId) ?? [];
+        const children = layout.members
+          .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : leadPerson.id) === (nodeId === leadNodeId ? leadPerson.id : nodeId))
+          .map((person) => person.id);
         const node = nodesById.get(nodeId);
         if (!node || children.length === 0) return;
         const childCenters = children

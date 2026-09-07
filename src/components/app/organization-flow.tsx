@@ -372,7 +372,7 @@ function buildGraph(units: OrgUnit[]) {
         style: { width: 1, height: 1, opacity: 0, pointerEvents: 'none' },
         draggable: false,
         selectable: false,
-        zIndex: -1
+        zIndex: 1
       });
     });
     nodes.forEach((node) => nodesById.set(node.id, node));

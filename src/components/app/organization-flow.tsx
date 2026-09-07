@@ -392,7 +392,7 @@ function buildGraph(units: OrgUnit[]) {
       };
     }
 
-    const hierarchyNodeIds = memberGraph.nodes();
+    const hierarchyNodeIds = memberGraph.nodes().filter((nodeId) => Boolean(memberGraph.node(nodeId)));
     hierarchyNodeIds.forEach((nodeId) => {
       const node = nodesById.get(nodeId);
       const position = memberGraph.node(nodeId);
@@ -405,7 +405,7 @@ function buildGraph(units: OrgUnit[]) {
 
     // Center each manager above the direct reports Dagre placed below it.
     [...hierarchyNodeIds]
-      .sort((left, right) => memberGraph.node(right).y - memberGraph.node(left).y)
+      .sort((left, right) => (memberGraph.node(right)?.y ?? 0) - (memberGraph.node(left)?.y ?? 0))
       .forEach((nodeId) => {
         const children = layout.members
           .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : layout.leadPerson.id) === (nodeId === leadNodeId ? layout.leadPerson.id : nodeId))

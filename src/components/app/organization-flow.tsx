@@ -125,7 +125,7 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
   const members = hasLead ? unit.people.filter((_, index) => index !== leadIndex) : unit.people;
 
   if (hasLead) {
-    const memberCount = team.people.length;
+    const memberCount = unit.people.length;
     const height = Math.max(
       276,
       SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + members.length * HIER_MEMBER_HEIGHT + Math.max(members.length - 1, 0) * HIER_MEMBER_GAP + SHEET_PADDING_Y
@@ -147,8 +147,8 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
   const height = SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + FLAT_MEMBER_HEIGHT + SHEET_PADDING_Y;
 
   return {
-    sheet,
-    team,
+    sheet: unit,
+    team: unit,
     width,
     height,
     mode: 'horizontal',

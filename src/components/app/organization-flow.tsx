@@ -375,7 +375,8 @@ function buildGraph(units: OrgUnit[]) {
       };
     }
 
-    [leadNodeId, ...layout.members.map((person) => person.id)].forEach((nodeId) => {
+    const hierarchyNodeIds = [leadNodeId, ...layout.members.map((person) => person.id)];
+    hierarchyNodeIds.forEach((nodeId) => {
       const node = nodesById.get(nodeId);
       const position = memberGraph.node(nodeId);
       if (!node || !position) return;
@@ -384,6 +385,22 @@ function buildGraph(units: OrgUnit[]) {
         y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - (nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT) / 2
       };
     });
+
+    // Center each manager above the direct reports Dagre placed below it.
+    [...hierarchyNodeIds]
+      .sort((left, right) => memberGraph.node(right).y - memberGraph.node(left).y)
+      .forEach((nodeId) => {
+        const children = memberGraph.successors(nodeId) ?? [];
+        const node = nodesById.get(nodeId);
+        if (!node || children.length === 0) return;
+        const childCenters = children
+          .map((childId) => nodesById.get(childId))
+          .filter((child): child is Node => Boolean(child))
+          .map((child) => child.position.x + memberWidth / 2);
+        if (childCenters.length > 0) {
+          node.position.x = childCenters.reduce((sum, center) => sum + center, 0) / childCenters.length - memberWidth / 2;
+        }
+      });
   });
 
   return { nodes, edges };

@@ -187,7 +187,8 @@ function buildGraph(units: OrgUnit[]) {
         height
       },
       draggable: false,
-      selectable: false
+      selectable: false,
+      zIndex: 0
     });
 
     if (mode === 'hierarchical' && leadPerson) {
@@ -207,7 +208,8 @@ function buildGraph(units: OrgUnit[]) {
           height: LEAD_CARD_HEIGHT
         },
         draggable: false,
-        selectable: false
+        selectable: false,
+        zIndex: 1
       });
 
       edges.push({
@@ -244,7 +246,8 @@ function buildGraph(units: OrgUnit[]) {
             height: HIER_MEMBER_HEIGHT
           },
           draggable: false,
-          selectable: false
+          selectable: false,
+          zIndex: 1
         });
 
         const reportingNodeId = person.reportsToMemberId ? memberNodeIds.get(person.reportsToMemberId) : leadNodeId;
@@ -284,7 +287,8 @@ function buildGraph(units: OrgUnit[]) {
           height: FLAT_MEMBER_HEIGHT
         },
         draggable: false,
-        selectable: false
+        selectable: false,
+        zIndex: 1
       });
     });
   });

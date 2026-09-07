@@ -38,7 +38,7 @@ const SHEET_GAP = 40;
 const SHEET_HEADER_HEIGHT = 64;
 const SHEET_PADDING_X = 16;
 const SHEET_PADDING_Y = 18;
-const LEAD_CARD_HEIGHT = 92;
+const LEAD_CARD_HEIGHT = 88;
 const HIER_MEMBER_WIDTH = 300;
 const HIER_MEMBER_HEIGHT = 88;
 const HIER_MEMBER_GAP = 16;
@@ -73,13 +73,13 @@ function SheetNode({ data }: NodeProps<SheetNodeData>) {
 
 function LeadNode({ data }: NodeProps<LeadNodeData>) {
   return (
-    <div className="flex h-full w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
+    <div className="flex h-full w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
         {data.avatar ?? initialOf(data.name)}
       </div>
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-900">{data.name}</p>
-        <p className="text-sm text-slate-500">{data.title}</p>
+      <div className="flex min-w-0 items-baseline gap-2">
+        <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+        <p className="truncate text-sm text-slate-500">{data.title}</p>
       </div>
       <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
     </div>
@@ -105,9 +105,9 @@ function MemberNode({ data }: NodeProps<MemberNodeData>) {
       >
         {initialOf(data.name)}
       </div>
-      <div className="min-w-0">
-        <p className={data.compact ? 'text-sm font-semibold text-slate-900' : 'text-sm font-semibold text-slate-900'}>{data.name}</p>
-        <p className={data.compact ? 'text-xs text-slate-500' : 'text-sm text-slate-500'}>{data.title}</p>
+      <div className="flex min-w-0 items-baseline gap-2">
+        <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+        <p className={data.compact ? 'truncate text-xs text-slate-500' : 'truncate text-sm text-slate-500'}>{data.title}</p>
       </div>
     </div>
   );

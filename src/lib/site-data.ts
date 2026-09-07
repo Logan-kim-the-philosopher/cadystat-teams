@@ -73,7 +73,7 @@ export type Meeting = {
 };
 
 export const stats = [
-  { label: '팀 수', value: '3', hint: '조직도 반영' },
+  { label: '팀 수', value: '4', hint: '조직도 반영' },
   { label: '열린 티켓', value: '12', hint: '단일 접수함' },
   { label: '회의록', value: '24', hint: '전체회의 전용' }
 ];
@@ -86,6 +86,12 @@ export const orgLeader: OrgLeader = {
 };
 
 export const orgSheets: OrgSheet[] = [
+  {
+    id: 'sheet-executive',
+    name: '운영진',
+    description: '대표이사와 회사 운영',
+    teamSlugs: ['executive']
+  },
   {
     id: 'sheet-operations',
     name: '경영지원팀',
@@ -107,6 +113,18 @@ export const orgSheets: OrgSheet[] = [
 ];
 
 export const teams: Team[] = [
+  {
+    slug: 'executive',
+    sheetId: 'sheet-executive',
+    name: '운영진',
+    lead: '홍길동',
+    members: 1,
+    tickets: 0,
+    description: '대표이사와 회사 운영을 담당합니다.',
+    responsibilities: ['전략 수립', '의사결정', '조직 운영'],
+    tone: 'amber',
+    people: [{ id: 'executive-hong', name: '홍길동', title: '대표이사' }]
+  },
   {
     slug: 'product',
     sheetId: 'sheet-product',

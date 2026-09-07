@@ -11,8 +11,8 @@ const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
 <SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
   <SectionTitle
     eyebrow="조직도"
-    title="대표이사 아래 시트, 시트 안에 팀과 멤버"
-    description="시트 카드로 팀 단위를 다시 묶어서 보여줍니다."
+    title="운영진 아래 시트, 시트 안에 팀장과 멤버"
+    description="시트끼리만 연결하고, 각 시트 안에서 리드와 멤버를 배치합니다."
   >
     <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams · {totalMembers} members</Badge>
   </SectionTitle>

@@ -2,16 +2,19 @@ export type OrgMember = {
   id: string;
   name: string;
   title: string;
+  orgUnitId: string;
+  reportsToMemberId: string | null;
 };
 
-export type Team = {
+export type OrgUnit = {
+  id: string;
   slug: string;
-  sheetId: string;
   name: string;
-  lead: string | null;
+  description: string;
+  parentId: string | null;
+  leadMemberId: string | null;
   members: number;
   tickets: number;
-  description: string;
   responsibilities: string[];
   tone: 'blue' | 'green' | 'amber';
   people: OrgMember[];
@@ -24,12 +27,6 @@ export type OrgLeader = {
   avatar: string;
 };
 
-export type OrgSheet = {
-  id: string;
-  name: string;
-  description: string;
-  teamSlugs: string[];
-};
 
 export type Ticket = {
   id: string;
@@ -85,95 +82,42 @@ export const orgLeader: OrgLeader = {
   avatar: '홍'
 };
 
-export const orgSheets: OrgSheet[] = [
+export const orgUnits: OrgUnit[] = [
   {
-    id: 'sheet-executive',
-    name: '운영진',
-    description: '대표이사와 회사 운영',
-    teamSlugs: ['executive']
+    id: 'org-executive', slug: 'executive', name: '운영진', description: '대표이사와 회사 운영을 담당합니다.', parentId: null, leadMemberId: 'executive-hong', members: 1, tickets: 0,
+    responsibilities: ['전략 수립', '의사결정', '조직 운영'], tone: 'amber',
+    people: [{ id: 'executive-hong', name: '홍길동', title: '대표이사', orgUnitId: 'org-executive', reportsToMemberId: null }]
   },
   {
-    id: 'sheet-operations',
-    name: '경영지원팀',
-    description: '인사, 총무, 재무',
-    teamSlugs: ['operations']
+    id: 'org-product', slug: 'product', name: '마케팅팀', description: '마케팅 및 홍보를 담당합니다.', parentId: 'org-executive', leadMemberId: 'product-jeong', members: 3, tickets: 5,
+    responsibilities: ['브랜드 캠페인', '콘텐츠 제작', '홍보 채널 운영'], tone: 'blue',
+    people: [
+      { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터', orgUnitId: 'org-product', reportsToMemberId: null },
+      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' },
+      { id: 'product-lee', name: '이서윤', title: '브랜드 마케터', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' }
+    ]
   },
   {
-    id: 'sheet-engineering',
-    name: '개발 시트',
-    description: '제품 개발 및 운영',
-    teamSlugs: ['engineering']
+    id: 'org-engineering', slug: 'engineering', name: '개발팀', description: '제품 개발 및 운영을 담당합니다.', parentId: 'org-executive', leadMemberId: 'engineering-bak', members: 3, tickets: 4,
+    responsibilities: ['제품 개발', '시스템 운영', '품질 검증'], tone: 'green',
+    people: [
+      { id: 'engineering-bak', name: '박정우', title: 'Backend Developer', orgUnitId: 'org-engineering', reportsToMemberId: null },
+      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' },
+      { id: 'engineering-ji', name: '이지훈', title: 'Platform Engineer', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' }
+    ]
   },
   {
-    id: 'sheet-product',
-    name: '마케팅 시트',
-    description: '마케팅 및 홍보',
-    teamSlugs: ['product']
+    id: 'org-operations', slug: 'operations', name: '경영지원팀', description: '인사, 총무, 재무를 담당합니다.', parentId: 'org-executive', leadMemberId: 'operations-kim', members: 3, tickets: 3,
+    responsibilities: ['인사 관리', '총무 지원', '재무 정리'], tone: 'amber',
+    people: [
+      { id: 'operations-kim', name: '김민수', title: '인사 담당', orgUnitId: 'org-operations', reportsToMemberId: null },
+      { id: 'operations-lee', name: '이영희', title: '재무 담당', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' },
+      { id: 'operations-jung', name: '정다은', title: '총무 담당', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' }
+    ]
   }
 ];
 
-export const teams: Team[] = [
-  {
-    slug: 'executive',
-    sheetId: 'sheet-executive',
-    name: '운영진',
-    lead: '홍길동',
-    members: 1,
-    tickets: 0,
-    description: '대표이사와 회사 운영을 담당합니다.',
-    responsibilities: ['전략 수립', '의사결정', '조직 운영'],
-    tone: 'amber',
-    people: [{ id: 'executive-hong', name: '홍길동', title: '대표이사' }]
-  },
-  {
-    slug: 'product',
-    sheetId: 'sheet-product',
-    name: '마케팅팀',
-    lead: '정하늘',
-    members: 3,
-    tickets: 5,
-    description: '마케팅 및 홍보를 담당합니다.',
-    responsibilities: ['브랜드 캠페인', '콘텐츠 제작', '홍보 채널 운영'],
-    tone: 'blue',
-    people: [
-      { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터' },
-      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터' },
-      { id: 'product-lee', name: '이서윤', title: '브랜드 마케터' }
-    ]
-  },
-  {
-    slug: 'engineering',
-    sheetId: 'sheet-engineering',
-    name: '개발팀',
-    lead: '박정우',
-    members: 3,
-    tickets: 4,
-    description: '제품 개발 및 운영을 담당합니다.',
-    responsibilities: ['제품 개발', '시스템 운영', '품질 검증'],
-    tone: 'green',
-    people: [
-      { id: 'engineering-bak', name: '박정우', title: 'Backend Developer' },
-      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer' },
-      { id: 'engineering-ji', name: '이지훈', title: 'Platform Engineer' }
-    ]
-  },
-  {
-    slug: 'operations',
-    sheetId: 'sheet-operations',
-    name: '경영지원팀',
-    lead: '김민수',
-    members: 3,
-    tickets: 3,
-    description: '인사, 총무, 재무를 담당합니다.',
-    responsibilities: ['인사 관리', '총무 지원', '재무 정리'],
-    tone: 'amber',
-    people: [
-      { id: 'operations-kim', name: '김민수', title: '인사 담당' },
-      { id: 'operations-lee', name: '이영희', title: '재무 담당' },
-      { id: 'operations-jung', name: '정다은', title: '총무 담당' }
-    ]
-  }
-];
+export const teams = orgUnits;
 
 export const tickets: Ticket[] = [
   {
@@ -287,4 +231,4 @@ export const meetings: Meeting[] = [
 ];
 
 export const meetingDetails: Record<string, Meeting> = Object.fromEntries(meetings.map((meeting) => [meeting.slug, meeting]));
-export const teamDetails: Record<string, Team> = Object.fromEntries(teams.map((team) => [team.slug, team]));
+export const teamDetails: Record<string, OrgUnit> = Object.fromEntries(orgUnits.map((unit) => [unit.slug, unit]));

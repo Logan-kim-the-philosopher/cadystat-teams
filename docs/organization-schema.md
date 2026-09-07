@@ -1,99 +1,68 @@
 # 조직도 데이터 스키마
 
-현재 `cody-stat` 조직도는 **운영진 시트가 최상단**이고, 그 아래에 하위 시트들이 연결되는 구조입니다.
-각 시트 안에는 **팀장 → 팀원** 흐름이 기본이고, 팀장이 없으면 **수평형**으로 배치합니다.
+조직도는 `OrgUnit` 하나를 기준으로 표현합니다. 과거의 `OrgSheet`와 `Team`을 분리하지 않고, 조직 정보와 조직 내부 구성원을 한 객체에 담습니다.
 
-## 1) 구조 개요
+## 구조
+
+```text
+OrgUnit
+├── parentId                 상위 조직
+├── leadMemberId             조직장
+└── people[]
+    ├── orgUnitId            소속 조직
+    └── reportsToMemberId    보고 대상 구성원
+```
 
 ```mermaid
 flowchart TD
-  s0[OrgSheet\n운영진]
-  s1[OrgSheet\n경영지원팀]
-  s2[OrgSheet\n개발 시트]
-  s3[OrgSheet\n마케팅 시트]
+  root[OrgUnit: 운영진\nparentId: null]
+  rootLead[OrgMember: 홍길동\nreportsToMemberId: null]
+  eng[OrgUnit: 개발팀\nparentId: org-executive]
+  engLead[OrgMember: 박정우\nleadMemberId]
+  engMember[OrgMember: 최수진\nreportsToMemberId: engineering-bak]
 
-  s0 --> s1
-  s0 --> s2
-  s0 --> s3
-
-  subgraph exec[운영진 내부]
-    l0[Lead\n홍길동 / 대표이사]
-  end
-
-  subgraph ops[경영지원팀 내부]
-    l1[Lead\n김민수 / 인사 담당]
-    m11[Member]
-    m12[Member]
-  end
-
-  subgraph eng[개발 시트 내부]
-    l2[Lead\n박정우 / Backend Developer]
-    m21[Member]
-    m22[Member]
-  end
-
-  subgraph prod[마케팅 시트 내부]
-    l3[Lead\n정하늘 / 콘텐츠 마케터]
-    m31[Member]
-    m32[Member]
-  end
+  root --> rootLead
+  root --> eng
+  eng --> engLead
+  engLead --> engMember
 ```
 
-## 2) 타입 스키마
+## 타입
 
-### OrgSheet
-상위 조직 카드
-- `id`
-- `name`
-- `description`
-- `teamSlugs`
-
-### Team
-시트 내부 조직 단위
-- `slug`
-- `sheetId`
-- `name`
-- `lead` (`string | null`)
-- `members`
-- `tickets`
-- `description`
-- `responsibilities`
-- `tone`
-- `people[]`
+### OrgUnit
+- `id`: 조직 고유 ID
+- `slug`: URL용 식별자
+- `name`: 조직명
+- `description`: 조직 설명
+- `parentId`: 상위 `OrgUnit.id`; 최상위 조직은 `null`
+- `leadMemberId`: 조직장 `OrgMember.id`; 수평 조직은 `null`
+- `members`: 표시용 인원 수
+- `tickets`: 담당 티켓 수
+- `responsibilities`: 담당 업무
+- `tone`: UI 색상
+- `people`: 조직 구성원 배열
 
 ### OrgMember
-멤버 노드
-- `id`
-- `name`
-- `title`
+- `id`: 구성원 고유 ID
+- `name`: 이름
+- `title`: 직함
+- `orgUnitId`: 소속 조직 ID
+- `reportsToMemberId`: 보고 대상 구성원 ID; 최상위 구성원은 `null`
 
-### OrgLeader
-현재는 별도 루트 노드가 아니라, 운영진 시트 안의 리드 역할로만 사용 가능
-- `name`
-- `title`
-- `subtitle`
-- `avatar`
+## 위계 표현 규칙
 
-## 3) 렌더링 규칙
+- 조직 간 위계: `OrgUnit.parentId`
+- 조직장: `OrgUnit.leadMemberId`
+- 사람 간 위계: `OrgMember.reportsToMemberId`
+- `leadMemberId`가 `null`이면 수평 조직으로 취급
+- 수평 조직에서는 구성원 간 엣지를 만들지 않음
+- 조직도 루트는 `parentId === null`인 `운영진`
 
-- **최상단은 운영진 시트**
-- **시트끼리만 엣지 연결**
-- 각 시트 내부는:
-  - `lead`가 있으면 **팀장 → 팀원** 수직 구조
-  - `lead`가 없으면 **팀원 수평 구조**
-- 팀장/리드가 있으면 그 아래로 멤버 엣지가 연결됨
-- 팀장이 없으면 멤버 간 엣지는 생략
+## 현재 목업 조직
 
-## 4) 현재 목업 데이터
+- `org-executive`: 운영진, 최상위 조직
+- `org-operations`: 경영지원팀, 운영진 하위
+- `org-engineering`: 개발팀, 운영진 하위
+- `org-product`: 마케팅팀, 운영진 하위
 
-- `sheet-executive` = 운영진
-- `sheet-operations` = 경영지원팀
-- `sheet-engineering` = 개발 시트
-- `sheet-product` = 마케팅 시트
-
-## 5) 해석 포인트
-
-- `members`는 표시 숫자
-- 실제 노드 수는 `people[]` 기준
-- `lead`가 `null`이면 수평형 조직으로 취급
-- `lead`는 문자열 매칭으로 리드 노드를 찾음
+화면에서는 기존 호환성을 위해 `teams` 별칭을 유지하지만, 실제 원본 데이터는 `orgUnits`입니다.

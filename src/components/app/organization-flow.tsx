@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Background, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import type { OrgMember, OrgSheet, Team } from '../../lib/site-data';
+import type { OrgMember, OrgUnit } from '../../lib/site-data';
 
 type SheetNodeData = {
   name: string;
@@ -23,8 +23,7 @@ type MemberNodeData = {
 };
 
 type SheetLayout = {
-  sheet: OrgSheet;
-  team: Team;
+  unit: OrgUnit;
   width: number;
   height: number;
   mode: 'hierarchical' | 'horizontal';
@@ -119,12 +118,11 @@ const nodeTypes = {
   member: MemberNode
 };
 
-function resolveSheetLayout(sheet: OrgSheet, team: Team): SheetLayout {
-  const leadName = team.lead?.trim();
-  const leadIndex = leadName ? team.people.findIndex((person) => person.name === leadName) : -1;
+function resolveSheetLayout(unit: OrgUnit): SheetLayout {
+  const leadIndex = unit.leadMemberId ? unit.people.findIndex((person) => person.id === unit.leadMemberId) : -1;
   const hasLead = leadIndex >= 0;
-  const leadPerson = hasLead ? team.people[leadIndex] : null;
-  const members = hasLead ? team.people.filter((_, index) => index !== leadIndex) : team.people;
+  const leadPerson = hasLead ? unit.people[leadIndex] : null;
+  const members = hasLead ? unit.people.filter((_, index) => index !== leadIndex) : unit.people;
 
   if (hasLead) {
     const memberCount = team.people.length;
@@ -134,8 +132,8 @@ function resolveSheetLayout(sheet: OrgSheet, team: Team): SheetLayout {
     );
 
     return {
-      sheet,
-      team,
+      sheet: unit,
+      team: unit,
       width: SHEET_WIDTH,
       height,
       mode: 'hierarchical',
@@ -159,13 +157,9 @@ function resolveSheetLayout(sheet: OrgSheet, team: Team): SheetLayout {
   };
 }
 
-function buildGraph(sheets: OrgSheet[], teams: Team[]) {
-  const teamMap = new Map(teams.map((team) => [team.sheetId, team]));
-  const layouts = sheets
-    .map((sheet) => {
-      const team = teamMap.get(sheet.id);
-      return team ? resolveSheetLayout(sheet, team) : null;
-    })
+function buildGraph(units: OrgUnit[]) {
+  const layouts = units
+    .map((unit) => resolveSheetLayout(unit))
     .filter((layout): layout is SheetLayout => Boolean(layout));
 
   const nodes: Node[] = [];
@@ -290,11 +284,11 @@ function buildGraph(sheets: OrgSheet[], teams: Team[]) {
   });
 
   if (layouts.length > 1) {
-    const rootSheetId = layouts[0].sheet.id;
-    layouts.slice(1).forEach((layout) => {
+    const rootSheetId = layouts.find((layout) => layout.sheet.parentId === null)?.sheet.id ?? layouts[0].sheet.id;
+    layouts.filter((layout) => layout.sheet.id !== rootSheetId).forEach((layout) => {
       edges.push({
-        id: `${rootSheetId}-${layout.sheet.id}`,
-        source: rootSheetId,
+        id: `${layout.sheet.parentId ?? rootSheetId}-${layout.sheet.id}`,
+        source: layout.sheet.parentId ?? rootSheetId,
         target: layout.sheet.id,
         type: 'smoothstep',
         style: {
@@ -309,12 +303,11 @@ function buildGraph(sheets: OrgSheet[], teams: Team[]) {
 }
 
 type OrganizationFlowProps = {
-  sheets: OrgSheet[];
-  teams: Team[];
+  units: OrgUnit[];
 };
 
-export function OrganizationFlow({ sheets, teams }: OrganizationFlowProps) {
-  const { nodes, edges } = React.useMemo(() => buildGraph(sheets, teams), [sheets, teams]);
+export function OrganizationFlow({ units }: OrganizationFlowProps) {
+  const { nodes, edges } = React.useMemo(() => buildGraph(units), [units]);
 
   return (
     <div

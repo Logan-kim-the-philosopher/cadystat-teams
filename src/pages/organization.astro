@@ -3,9 +3,9 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { Badge } from '../components/ui/badge';
 import { SectionTitle } from '../components/app/section-title';
 import { OrganizationFlow } from '../components/app/organization-flow';
-import { orgSheets, teams } from '../lib/site-data';
+import { orgUnits } from '../lib/site-data';
 
-const totalMembers = teams.reduce((sum, team) => sum + team.people.length, 0);
+const totalMembers = orgUnits.reduce((sum, unit) => sum + unit.people.length, 0);
 ---
 
 <SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
@@ -14,10 +14,10 @@ const totalMembers = teams.reduce((sum, team) => sum + team.people.length, 0);
     title="운영진 조직이 최상단이고, 그 아래 조직들이 이어집니다"
     description="각 조직은 팀장-팀원 구조를 가지며, 팀장이 없으면 수평형으로 배치됩니다."
   >
-    <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams · {totalMembers} members</Badge>
+    <Badge variant="outline">{orgUnits.length} organizations · {totalMembers} members</Badge>
   </SectionTitle>
 
   <div className="mt-6">
-    <OrganizationFlow client:only="react" sheets={orgSheets} teams={teams} />
+    <OrganizationFlow client:only="react" units={orgUnits} />
   </div>
 </SiteLayout>

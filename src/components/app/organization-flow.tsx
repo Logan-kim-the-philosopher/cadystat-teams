@@ -209,7 +209,7 @@ function buildGraph(units: OrgUnit[]) {
       },
       draggable: false,
       selectable: false,
-      zIndex: 0
+      zIndex: -1
     });
 
     if (mode === 'hierarchical' && leadPerson) {

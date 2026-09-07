@@ -60,7 +60,7 @@ function SheetNode({ data }: NodeProps<SheetNodeData>) {
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">{data.name}</h3>
+          <h3 className="text-base font-bold text-slate-900">{data.name}</h3>
         </div>
         <span className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
           {data.memberCount}명

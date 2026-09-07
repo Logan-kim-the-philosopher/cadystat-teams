@@ -372,6 +372,15 @@ function buildGraph(units: OrgUnit[]) {
     });
     dagre.layout(memberGraph);
 
+    const memberGraphSize = memberGraph.graph();
+    if (sheetNode) {
+      sheetNode.style = {
+        ...sheetNode.style,
+        width: Math.max(layout.width, (memberGraphSize.width ?? 0) + SHEET_PADDING_X * 2),
+        height: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y * 2 + (memberGraphSize.height ?? 0)
+      };
+    }
+
     [leadNodeId, ...layout.members.map((person) => person.id)].forEach((nodeId) => {
       const node = nodesById.get(nodeId);
       const position = memberGraph.node(nodeId);

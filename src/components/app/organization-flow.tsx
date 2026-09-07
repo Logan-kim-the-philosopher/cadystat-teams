@@ -2,10 +2,16 @@ import * as React from 'react';
 import { Background, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import type { OrgLeader, Team } from '../../lib/site-data';
+import type { OrgLeader, OrgSheet, Team } from '../../lib/site-data';
 import { cn } from '../../lib/utils';
 
 type LeaderNodeData = OrgLeader;
+
+type SheetNodeData = {
+  name: string;
+  description: string;
+  teamCount: number;
+};
 
 type TeamNodeData = {
   name: string;
@@ -58,6 +64,25 @@ function LeaderNode({ data }: NodeProps<LeaderNodeData>) {
   );
 }
 
+function SheetNode({ data }: NodeProps<SheetNodeData>) {
+  return (
+    <div className="relative flex h-full w-full flex-col rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">Sheet</p>
+          <h3 className="mt-1 text-sm font-semibold text-slate-900">{data.name}</h3>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{data.description}</p>
+        </div>
+        <span className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+          {data.teamCount}팀
+        </span>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
+    </div>
+  );
+}
+
 function TeamNode({ data }: NodeProps<TeamNodeData>) {
   return (
     <div
@@ -99,16 +124,24 @@ function MemberNode({ data }: NodeProps<MemberNodeData>) {
 
 const nodeTypes = {
   leader: LeaderNode,
+  sheet: SheetNode,
   team: TeamNode,
   member: MemberNode
 };
 
-function buildGraph(leader: OrgLeader, teams: Team[]) {
+function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
+  const teamMap = new Map(teams.map((team) => [team.slug, team]));
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  const sheetCount = teams.length;
-  const totalWidth = sheetCount * TEAM_WIDTH + Math.max(sheetCount - 1, 0) * TEAM_GAP;
+  const sheetCount = sheets.length;
+  const sheetWidth = 332;
+  const sheetGap = 40;
+  const totalWidth = sheetCount * sheetWidth + Math.max(sheetCount - 1, 0) * sheetGap;
   const startX = (FLOW_WIDTH - totalWidth) / 2;
+  const sheetTop = 170;
+  const teamX = 16;
+  const teamY = 64;
+  const memberStartY = teamY + TEAM_HEIGHT + 18;
 
   nodes.push({
     id: 'leader',
@@ -123,14 +156,37 @@ function buildGraph(leader: OrgLeader, teams: Team[]) {
     selectable: false
   });
 
-  teams.forEach((team, index) => {
-    const x = startX + index * (TEAM_WIDTH + TEAM_GAP);
-    const memberTop = MEMBER_Y;
+  sheets.forEach((sheet, index) => {
+    const team = teamMap.get(sheet.teamSlugs[0]);
+    if (!team) return;
+
+    const sheetX = startX + index * (sheetWidth + sheetGap);
+    const sheetHeight = Math.max(310, memberStartY + team.people.length * MEMBER_HEIGHT + Math.max(team.people.length - 1, 0) * MEMBER_GAP + 20);
+    const innerWidth = sheetWidth - teamX * 2;
+
+    nodes.push({
+      id: sheet.id,
+      type: 'sheet',
+      position: { x: sheetX, y: sheetTop },
+      data: {
+        name: sheet.name,
+        description: sheet.description,
+        teamCount: sheet.teamSlugs.length
+      },
+      style: {
+        width: sheetWidth,
+        height: sheetHeight
+      },
+      draggable: false,
+      selectable: false
+    });
 
     nodes.push({
       id: team.slug,
       type: 'team',
-      position: { x, y: TEAM_Y },
+      parentId: sheet.id,
+      extent: 'parent',
+      position: { x: teamX, y: teamY },
       data: {
         name: team.name,
         lead: team.lead,
@@ -138,7 +194,7 @@ function buildGraph(leader: OrgLeader, teams: Team[]) {
         tone: team.tone
       },
       style: {
-        width: TEAM_WIDTH,
+        width: innerWidth,
         height: TEAM_HEIGHT
       },
       draggable: false,
@@ -146,9 +202,9 @@ function buildGraph(leader: OrgLeader, teams: Team[]) {
     });
 
     edges.push({
-      id: `leader-${team.slug}`,
+      id: `leader-${sheet.id}`,
       source: 'leader',
-      target: team.slug,
+      target: sheet.id,
       type: 'smoothstep',
       style: {
         stroke: '#d1d5db',
@@ -160,16 +216,18 @@ function buildGraph(leader: OrgLeader, teams: Team[]) {
       nodes.push({
         id: person.id,
         type: 'member',
+        parentId: sheet.id,
+        extent: 'parent',
         position: {
-          x,
-          y: memberTop + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
+          x: teamX,
+          y: memberStartY + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
         },
         data: {
           name: person.name,
           title: person.title
         },
         style: {
-          width: MEMBER_WIDTH,
+          width: innerWidth,
           height: MEMBER_HEIGHT
         },
         draggable: false,
@@ -194,11 +252,12 @@ function buildGraph(leader: OrgLeader, teams: Team[]) {
 
 type OrganizationFlowProps = {
   leader: OrgLeader;
+  sheets: OrgSheet[];
   teams: Team[];
 };
 
-export function OrganizationFlow({ leader, teams }: OrganizationFlowProps) {
-  const { nodes, edges } = React.useMemo(() => buildGraph(leader, teams), [leader, teams]);
+export function OrganizationFlow({ leader, sheets, teams }: OrganizationFlowProps) {
+  const { nodes, edges } = React.useMemo(() => buildGraph(leader, sheets, teams), [leader, sheets, teams]);
 
   return (
     <div

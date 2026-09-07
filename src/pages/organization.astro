@@ -11,13 +11,13 @@ const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
 <SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
   <SectionTitle
     eyebrow="조직도"
-    title="대표이사 아래 팀, 팀 아래 멤버"
-    description="겹겹이 쌓인 배경 없이, 평면형 카드 조직도로 보여줍니다."
+    title="대표이사 아래 시트, 시트 안에 팀과 멤버"
+    description="시트 카드로 팀 단위를 다시 묶어서 보여줍니다."
   >
     <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams · {totalMembers} members</Badge>
   </SectionTitle>
 
   <div className="mt-6">
-    <OrganizationFlow client:only="react" leader={orgLeader} teams={teams} />
+    <OrganizationFlow client:only="react" leader={orgLeader} sheets={orgSheets} teams={teams} />
   </div>
 </SiteLayout>

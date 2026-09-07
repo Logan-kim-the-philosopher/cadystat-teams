@@ -391,7 +391,7 @@ function buildGraph(units: OrgUnit[]) {
       .sort((left, right) => memberGraph.node(right).y - memberGraph.node(left).y)
       .forEach((nodeId) => {
         const children = layout.members
-          .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : leadPerson.id) === (nodeId === leadNodeId ? leadPerson.id : nodeId))
+          .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : layout.leadPerson.id) === (nodeId === leadNodeId ? leadPerson.id : nodeId))
           .map((person) => person.id);
         const node = nodesById.get(nodeId);
         if (!node || children.length === 0) return;

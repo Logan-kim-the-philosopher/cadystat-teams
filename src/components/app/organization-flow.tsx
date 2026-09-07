@@ -346,7 +346,7 @@ function buildGraph(units: OrgUnit[]) {
 
     const childrenByManager = new Map<string, string[]>();
     layout.members.forEach((person) => {
-      const managerId = person.reportsToMemberId ? memberNodeIds.get(person.reportsToMemberId) : leadNodeId;
+      const managerId = person.reportsToMemberId ?? leadNodeId;
       if (!managerId) return;
       childrenByManager.set(managerId, [...(childrenByManager.get(managerId) ?? []), person.id]);
     });

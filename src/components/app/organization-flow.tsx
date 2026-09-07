@@ -80,7 +80,7 @@ function LeadNode({ data }: NodeProps<LeadNodeData>) {
         {data.avatar ?? initialOf(data.name)}
       </div>
       <div className="min-w-0">
-        <div className="flex min-w-0 items-baseline gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
           <p className="shrink-0 text-xs font-medium text-slate-400">{data.role}</p>
         </div>
@@ -111,7 +111,7 @@ function MemberNode({ data }: NodeProps<MemberNodeData>) {
         {initialOf(data.name)}
       </div>
       <div className="min-w-0">
-        <div className="flex min-w-0 items-baseline gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
           <p className="shrink-0 text-xs font-medium text-slate-400">{data.role}</p>
         </div>

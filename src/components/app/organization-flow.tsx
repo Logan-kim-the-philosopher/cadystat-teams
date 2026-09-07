@@ -343,6 +343,30 @@ function buildGraph(units: OrgUnit[]) {
         node.position = { x: node.position.x + deltaX, y: node.position.y + deltaY };
       }
     });
+
+    if (layout.mode !== 'hierarchical' || !layout.leadPerson) return;
+
+    // Lay out members from reportsToMemberId instead of treating them as one list.
+    const memberGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+    const memberWidth = layout.width - SHEET_PADDING_X * 2;
+    memberGraph.setGraph({ rankdir: 'TB', nodesep: 16, ranksep: 24, marginx: 0, marginy: 0 });
+    const leadNodeId = `${layout.sheet.id}-lead`;
+    memberGraph.setNode(leadNodeId, { width: memberWidth, height: LEAD_CARD_HEIGHT });
+    layout.members.forEach((person) => memberGraph.setNode(person.id, { width: memberWidth, height: HIER_MEMBER_HEIGHT }));
+    layout.members.forEach((person) => {
+      memberGraph.setEdge(person.reportsToMemberId ?? leadNodeId, person.id);
+    });
+    dagre.layout(memberGraph);
+
+    [leadNodeId, ...layout.members.map((person) => person.id)].forEach((nodeId) => {
+      const node = nodesById.get(nodeId);
+      const position = memberGraph.node(nodeId);
+      if (!node || !position) return;
+      node.position = {
+        x: nextX + position.x - memberWidth / 2,
+        y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - (nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT) / 2
+      };
+    });
   });
 
   return { nodes, edges };

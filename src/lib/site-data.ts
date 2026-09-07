@@ -1,5 +1,12 @@
+export type OrgMember = {
+  id: string;
+  name: string;
+  title: string;
+};
+
 export type Team = {
   slug: string;
+  sheetId: string;
   name: string;
   lead: string;
   members: number;
@@ -7,6 +14,14 @@ export type Team = {
   description: string;
   responsibilities: string[];
   tone: 'blue' | 'green' | 'amber';
+  people: OrgMember[];
+};
+
+export type OrgSheet = {
+  id: string;
+  name: string;
+  description: string;
+  teamSlugs: string[];
 };
 
 export type Ticket = {
@@ -56,36 +71,73 @@ export const stats = [
   { label: '회의록', value: '24', hint: '전체회의 전용' }
 ];
 
+export const orgSheets: OrgSheet[] = [
+  {
+    id: 'sheet-product',
+    name: '제품 시트',
+    description: '접수 분류와 우선순위 정리를 담당하는 시트입니다.',
+    teamSlugs: ['product', 'engineering']
+  },
+  {
+    id: 'sheet-operations',
+    name: '운영 시트',
+    description: '큐 정리와 후속 조치를 조율하는 시트입니다.',
+    teamSlugs: ['operations']
+  }
+];
+
 export const teams: Team[] = [
   {
     slug: 'product',
+    sheetId: 'sheet-product',
     name: '제품팀',
     lead: '민지',
     members: 4,
     tickets: 5,
     description: '접수 분류, 기능 정리, 로드맵 정합성을 담당합니다.',
     responsibilities: ['접수 검토', '범위 결정', '로드맵 정리'],
-    tone: 'blue'
+    tone: 'blue',
+    people: [
+      { id: 'product-minji', name: '민지', title: '팀 리드' },
+      { id: 'product-jiyoon', name: '지윤', title: 'PM' },
+      { id: 'product-hana', name: '하나', title: '서비스 기획' },
+      { id: 'product-taeho', name: '태호', title: '데이터 분석' }
+    ]
   },
   {
     slug: 'engineering',
+    sheetId: 'sheet-product',
     name: '개발팀',
     lead: '재호',
     members: 6,
     tickets: 4,
     description: '구현, 버그 수정, 기술 검증을 담당합니다.',
     responsibilities: ['수정 배포', '원인 분석', '릴리스 점검'],
-    tone: 'green'
+    tone: 'green',
+    people: [
+      { id: 'engineering-jaeho', name: '재호', title: '팀 리드' },
+      { id: 'engineering-seoyun', name: '서연', title: '프론트엔드' },
+      { id: 'engineering-minseok', name: '민석', title: '백엔드' },
+      { id: 'engineering-junho', name: '준호', title: '플랫폼' },
+      { id: 'engineering-harin', name: '하린', title: 'QA' },
+      { id: 'engineering-taeyun', name: '태윤', title: '인프라' }
+    ]
   },
   {
     slug: 'operations',
+    sheetId: 'sheet-operations',
     name: '운영팀',
     lead: '소라',
     members: 3,
     tickets: 3,
     description: '들어오는 요청을 정리하고 후속 조치를 조율합니다.',
     responsibilities: ['큐 정리', '회의 준비', '후속 추적'],
-    tone: 'amber'
+    tone: 'amber',
+    people: [
+      { id: 'operations-sora', name: '소라', title: '팀 리드' },
+      { id: 'operations-hyunji', name: '현지', title: '운영 매니저' },
+      { id: 'operations-jinho', name: '진호', title: '파트너 대응' }
+    ]
   }
 ];
 

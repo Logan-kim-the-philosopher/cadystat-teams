@@ -3,69 +3,75 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { SectionTitle } from '../components/app/section-title';
-import { teams } from '../lib/site-data';
+import { OrganizationFlow } from '../components/app/organization-flow';
+import { orgSheets, teams } from '../lib/site-data';
+
+const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
 ---
 
 <SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
   <SectionTitle
     eyebrow="조직도"
-    title="실시간 팀 구조"
-    description="팀은 생성하고 수정할 수 있으며, 변화는 포털에서 바로 보이도록 설계합니다."
+    title="시트 안에 팀, 팀 아래 멤버"
+    description="코디세이 플랫폼의 조직 구조를 React Flow 기반 노드와 엣지로 보여줍니다."
   >
-    <Badge variant="outline">3개 팀</Badge>
+    <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams</Badge>
   </SectionTitle>
 
-  <div class="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-    <Card>
+  <div class="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_360px]">
+    <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle className="text-lg">조직도</CardTitle>
-        <CardDescription>간단한 계층 구조 미리보기</CardDescription>
+        <CardTitle className="text-lg">조직도 목업</CardTitle>
+        <CardDescription>시트 단위로 팀을 묶고, 각 팀 아래 팀원 노드를 연결했습니다.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div class="space-y-6">
-          <div class="rounded-2xl border border-dashed border-blue-200 bg-blue-50/60 p-4">
-            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">루트</div>
-            <div class="mt-1 text-lg font-semibold">회사</div>
-          </div>
-          <div class="grid gap-4 md:grid-cols-3">
-            {teams.map((team) => (
-              <a href={`/organization/${team.slug}`} class="rounded-2xl border border-border bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
-                <div class="flex items-center justify-between gap-3">
-                  <h3 class="font-semibold">{team.name}</h3>
-                  <Badge variant={team.tone}>{team.members}명</Badge>
-                </div>
-                <p class="mt-3 text-sm leading-6 text-muted-foreground">{team.description}</p>
-                <div class="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                  <span>리더: {team.lead}</span>
-                  <span>열린 티켓 {team.tickets}개</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
+      <CardContent className="p-0">
+        <OrganizationFlow client:only="react" sheets={orgSheets} teams={teams} />
       </CardContent>
     </Card>
 
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">팀 목록</CardTitle>
-        <CardDescription>누가 무엇을 맡는지</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-4">
-          {teams.map((team) => (
-            <a href={`/organization/${team.slug}`} class="block rounded-xl border border-border p-4 transition hover:bg-muted/50">
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="font-semibold">{team.name}</h3>
-                  <p class="mt-1 text-sm text-muted-foreground">리더 {team.lead} · {team.members}명</p>
+    <div class="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">구조 요약</CardTitle>
+          <CardDescription>현재 목업 데이터 기준</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <dl class="space-y-4 text-sm">
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">시트</dt>
+              <dd class="font-medium">{orgSheets.length}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">팀</dt>
+              <dd class="font-medium">{teams.length}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">팀원</dt>
+              <dd class="font-medium">{totalMembers}</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">시트 목록</CardTitle>
+          <CardDescription>어떤 팀이 어디에 묶이는지</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-4">
+            {orgSheets.map((sheet) => (
+              <div class="rounded-2xl border border-border p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <h3 class="font-semibold">{sheet.name}</h3>
+                  <Badge variant="outline">{sheet.teamSlugs.length}팀</Badge>
                 </div>
-                <Badge variant="outline">열린 티켓 {team.tickets}개</Badge>
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">{sheet.description}</p>
               </div>
-            </a>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   </div>
 </SiteLayout>

@@ -62,6 +62,26 @@ const team = teamDetails[slug];
           </dl>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">팀원</CardTitle>
+          <CardDescription>노드로 표시될 멤버들</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-3">
+            {team.people.map((person) => (
+              <div class="flex items-center justify-between gap-4 rounded-xl border border-border px-4 py-3">
+                <div>
+                  <p class="font-medium">{person.name}</p>
+                  <p class="text-sm text-muted-foreground">{person.title}</p>
+                </div>
+                {person.name === team.lead ? <Badge variant="outline">리드</Badge> : null}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   ) : (
     <Card>

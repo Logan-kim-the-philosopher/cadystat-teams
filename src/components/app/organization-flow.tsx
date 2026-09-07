@@ -1,4 +1,5 @@
 import * as React from 'react';
+import dagre from '@dagrejs/dagre';
 import { Background, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -302,6 +303,38 @@ function buildGraph(units: OrgUnit[]) {
       });
     });
   }
+
+  // Dagre lays out organization cards according to parentId. Member nodes keep
+  // their positions inside each card and move together with that card.
+  const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 110, marginx: 24, marginy: 24 });
+
+  layouts.forEach((layout) => {
+    dagreGraph.setNode(layout.sheet.id, { width: layout.width, height: layout.height });
+  });
+  edges
+    .filter((edge) => layouts.some((layout) => layout.sheet.id === edge.source) && layouts.some((layout) => layout.sheet.id === edge.target))
+    .forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
+  dagre.layout(dagreGraph);
+
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  layouts.forEach((layout) => {
+    const sheetNode = nodesById.get(layout.sheet.id);
+    const dagrePosition = dagreGraph.node(layout.sheet.id);
+    if (!sheetNode || !dagrePosition) return;
+
+    const nextX = dagrePosition.x - layout.width / 2;
+    const nextY = dagrePosition.y - layout.height / 2;
+    const deltaX = nextX - sheetNode.position.x;
+    const deltaY = nextY - sheetNode.position.y;
+    const memberIds = new Set(layout.sheet.people.map((person) => person.id));
+
+    nodes.forEach((node) => {
+      if (node.id === layout.sheet.id || memberIds.has(node.id) || node.id === `${layout.sheet.id}-lead`) {
+        node.position = { x: node.position.x + deltaX, y: node.position.y + deltaY };
+      }
+    });
+  });
 
   return { nodes, edges };
 }

@@ -14,14 +14,14 @@ type SheetNodeData = {
 type LeadNodeData = {
   name: string;
   title: string;
-  role: '팀장';
+  role: 'lead';
   avatar?: string;
 };
 
 type MemberNodeData = {
   name: string;
   title: string;
-  role: '팀원';
+  role: 'member';
   compact?: boolean;
 };
 
@@ -285,7 +285,7 @@ function buildGraph(units: OrgUnit[]) {
         data: {
           name: person.name,
           title: person.title,
-          role: '팀원',
+          role: 'member',
           compact: true
         },
         style: {

@@ -41,7 +41,7 @@ const SHEET_HEADER_HEIGHT = 64;
 const SHEET_PADDING_X = 16;
 const SHEET_PADDING_Y = 18;
 const LEAD_CARD_HEIGHT = 88;
-const HIER_MEMBER_WIDTH = 180;
+const HIER_MEMBER_WIDTH = 220;
 const HIER_MEMBER_HEIGHT = 88;
 const HIER_MEMBER_GAP = 16;
 const FLAT_MEMBER_WIDTH = 124;
@@ -230,17 +230,6 @@ function buildGraph(units: OrgUnit[]) {
         draggable: false,
         selectable: false,
         zIndex: 1
-      });
-
-      edges.push({
-        id: `${sheet.id}-lead`,
-        source: sheet.id,
-        target: leadNodeId,
-        type: 'smoothstep',
-        style: {
-          stroke: '#d1d5db',
-          strokeWidth: 1.5
-        }
       });
 
       const memberNodeIds = new Map<string, string>([[leadPerson.id, leadNodeId]]);

@@ -196,9 +196,7 @@ function buildGraph(units: OrgUnit[]) {
       nodes.push({
         id: leadNodeId,
         type: 'lead',
-        parentId: sheet.id,
-        extent: 'parent',
-        position: { x: SHEET_PADDING_X, y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
+        position: { x: sheetX + SHEET_PADDING_X, y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
         data: {
           name: leadPerson.name,
           title: leadPerson.title
@@ -231,11 +229,9 @@ function buildGraph(units: OrgUnit[]) {
         nodes.push({
           id: memberNodeId,
           type: 'member',
-          parentId: sheet.id,
-          extent: 'parent',
           position: {
-            x: SHEET_PADDING_X,
-            y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + memberIndex * (HIER_MEMBER_HEIGHT + HIER_MEMBER_GAP)
+            x: sheetX + SHEET_PADDING_X,
+            y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + memberIndex * (HIER_MEMBER_HEIGHT + HIER_MEMBER_GAP)
           },
           data: {
             name: person.name,
@@ -271,11 +267,9 @@ function buildGraph(units: OrgUnit[]) {
       nodes.push({
         id: person.id,
         type: 'member',
-        parentId: sheet.id,
-        extent: 'parent',
         position: {
-          x: SHEET_PADDING_X + memberIndex * (FLAT_MEMBER_WIDTH + FLAT_MEMBER_GAP),
-          y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y
+          x: sheetX + SHEET_PADDING_X + memberIndex * (FLAT_MEMBER_WIDTH + FLAT_MEMBER_GAP),
+          y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y
         },
         data: {
           name: person.name,

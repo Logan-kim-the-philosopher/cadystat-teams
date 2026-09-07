@@ -165,7 +165,7 @@ function buildGraph(units: OrgUnit[]) {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const totalWidth = layouts.reduce((sum, layout, index) => sum + layout.width + (index > 0 ? SHEET_GAP : 0), 0);
-  let cursorX = (FLOW_WIDTH - totalWidth) / 2;
+  let cursorX = Math.max(24, (FLOW_WIDTH - totalWidth) / 2);
 
   layouts.forEach((layout, index) => {
     const { sheet, team, width, height, mode, leadPerson, members } = layout;
@@ -322,8 +322,8 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        fitView
-        fitViewOptions={{ padding: 0.18 }}
+        fitView={false}
+        defaultViewport={{ x: 24, y: 24, zoom: 0.72 }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}

@@ -211,11 +211,11 @@ export function OrganizationFlow({ leader, teams }: OrganizationFlowProps) {
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
-        panOnDrag={false}
-        zoomOnScroll={false}
-        zoomOnDoubleClick={false}
-        minZoom={0.75}
-        maxZoom={1.15}
+        panOnDrag
+        zoomOnScroll
+        zoomOnDoubleClick
+        minZoom={0.5}
+        maxZoom={1.4}
       >
         <Background gap={24} size={1} color="rgba(148, 163, 184, 0.08)" />
       </ReactFlow>

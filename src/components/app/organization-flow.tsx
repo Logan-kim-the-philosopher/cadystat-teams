@@ -373,6 +373,7 @@ function buildGraph(units: OrgUnit[]) {
     dagre.layout(memberGraph);
 
     const memberGraphSize = memberGraph.graph();
+    const memberOffsetX = (layout.width - (memberGraphSize.width ?? 0)) / 2;
     if (sheetNode) {
       sheetNode.style = {
         ...sheetNode.style,
@@ -386,7 +387,7 @@ function buildGraph(units: OrgUnit[]) {
       const position = memberGraph.node(nodeId);
       if (!node || !position) return;
       node.position = {
-        x: nextX + position.x - memberWidth / 2,
+        x: nextX + memberOffsetX + position.x - memberWidth / 2,
         y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - (nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT) / 2
       };
     });

@@ -14,12 +14,14 @@ type SheetNodeData = {
 type LeadNodeData = {
   name: string;
   title: string;
+  role: '팀장';
   avatar?: string;
 };
 
 type MemberNodeData = {
   name: string;
   title: string;
+  role: '팀원';
   compact?: boolean;
 };
 
@@ -77,8 +79,11 @@ function LeadNode({ data }: NodeProps<LeadNodeData>) {
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
         {data.avatar ?? initialOf(data.name)}
       </div>
-      <div className="flex min-w-0 items-baseline gap-2">
-        <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+          <p className="shrink-0 text-xs font-medium text-slate-400">{data.role}</p>
+        </div>
         <p className="truncate text-sm text-slate-500">{data.title}</p>
       </div>
       <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
@@ -105,8 +110,11 @@ function MemberNode({ data }: NodeProps<MemberNodeData>) {
       >
         {initialOf(data.name)}
       </div>
-      <div className="flex min-w-0 items-baseline gap-2">
-        <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
+          <p className="shrink-0 text-xs font-medium text-slate-400">{data.role}</p>
+        </div>
         <p className={data.compact ? 'truncate text-xs text-slate-500' : 'truncate text-sm text-slate-500'}>{data.title}</p>
       </div>
     </div>
@@ -200,7 +208,8 @@ function buildGraph(units: OrgUnit[]) {
         position: { x: sheetX + SHEET_PADDING_X, y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
         data: {
           name: leadPerson.name,
-          title: leadPerson.title
+          title: leadPerson.title,
+          role: '팀장'
         },
         style: {
           width: innerWidth,
@@ -236,7 +245,8 @@ function buildGraph(units: OrgUnit[]) {
           },
           data: {
             name: person.name,
-            title: person.title
+            title: person.title,
+            role: '팀원'
           },
           style: {
             width: innerWidth,
@@ -275,6 +285,7 @@ function buildGraph(units: OrgUnit[]) {
         data: {
           name: person.name,
           title: person.title,
+          role: '팀원',
           compact: true
         },
         style: {

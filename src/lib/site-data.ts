@@ -17,6 +17,13 @@ export type Team = {
   people: OrgMember[];
 };
 
+export type OrgLeader = {
+  name: string;
+  title: string;
+  subtitle: string;
+  avatar: string;
+};
+
 export type OrgSheet = {
   id: string;
   name: string;
@@ -71,18 +78,31 @@ export const stats = [
   { label: '회의록', value: '24', hint: '전체회의 전용' }
 ];
 
+export const orgLeader: OrgLeader = {
+  name: '홍길동',
+  title: '대표이사',
+  subtitle: 'CEO',
+  avatar: '홍'
+};
+
 export const orgSheets: OrgSheet[] = [
   {
-    id: 'sheet-product',
-    name: '제품 시트',
-    description: '접수 분류와 우선순위 정리를 담당하는 시트입니다.',
-    teamSlugs: ['product', 'engineering']
+    id: 'sheet-operations',
+    name: '경영지원 시트',
+    description: '인사, 총무, 재무',
+    teamSlugs: ['operations']
   },
   {
-    id: 'sheet-operations',
-    name: '운영 시트',
-    description: '큐 정리와 후속 조치를 조율하는 시트입니다.',
-    teamSlugs: ['operations']
+    id: 'sheet-engineering',
+    name: '개발 시트',
+    description: '제품 개발 및 운영',
+    teamSlugs: ['engineering']
+  },
+  {
+    id: 'sheet-product',
+    name: '마케팅 시트',
+    description: '마케팅 및 홍보',
+    teamSlugs: ['product']
   }
 ];
 
@@ -90,53 +110,46 @@ export const teams: Team[] = [
   {
     slug: 'product',
     sheetId: 'sheet-product',
-    name: '제품팀',
-    lead: '민지',
-    members: 4,
+    name: '마케팅팀',
+    lead: '정하늘',
+    members: 3,
     tickets: 5,
-    description: '접수 분류, 기능 정리, 로드맵 정합성을 담당합니다.',
-    responsibilities: ['접수 검토', '범위 결정', '로드맵 정리'],
+    description: '마케팅 및 홍보를 담당합니다.',
+    responsibilities: ['브랜드 캠페인', '콘텐츠 제작', '홍보 채널 운영'],
     tone: 'blue',
     people: [
-      { id: 'product-minji', name: '민지', title: '팀 리드' },
-      { id: 'product-jiyoon', name: '지윤', title: 'PM' },
-      { id: 'product-hana', name: '하나', title: '서비스 기획' },
-      { id: 'product-taeho', name: '태호', title: '데이터 분석' }
+      { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터' },
+      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터' }
     ]
   },
   {
     slug: 'engineering',
-    sheetId: 'sheet-product',
+    sheetId: 'sheet-engineering',
     name: '개발팀',
-    lead: '재호',
-    members: 6,
+    lead: '박정우',
+    members: 3,
     tickets: 4,
-    description: '구현, 버그 수정, 기술 검증을 담당합니다.',
-    responsibilities: ['수정 배포', '원인 분석', '릴리스 점검'],
+    description: '제품 개발 및 운영을 담당합니다.',
+    responsibilities: ['제품 개발', '시스템 운영', '품질 검증'],
     tone: 'green',
     people: [
-      { id: 'engineering-jaeho', name: '재호', title: '팀 리드' },
-      { id: 'engineering-seoyun', name: '서연', title: '프론트엔드' },
-      { id: 'engineering-minseok', name: '민석', title: '백엔드' },
-      { id: 'engineering-junho', name: '준호', title: '플랫폼' },
-      { id: 'engineering-harin', name: '하린', title: 'QA' },
-      { id: 'engineering-taeyun', name: '태윤', title: '인프라' }
+      { id: 'engineering-bak', name: '박정우', title: 'Backend Developer' },
+      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer' }
     ]
   },
   {
     slug: 'operations',
     sheetId: 'sheet-operations',
-    name: '운영팀',
-    lead: '소라',
+    name: '경영지원팀',
+    lead: '김민수',
     members: 3,
     tickets: 3,
-    description: '들어오는 요청을 정리하고 후속 조치를 조율합니다.',
-    responsibilities: ['큐 정리', '회의 준비', '후속 추적'],
+    description: '인사, 총무, 재무를 담당합니다.',
+    responsibilities: ['인사 관리', '총무 지원', '재무 정리'],
     tone: 'amber',
     people: [
-      { id: 'operations-sora', name: '소라', title: '팀 리드' },
-      { id: 'operations-hyunji', name: '현지', title: '운영 매니저' },
-      { id: 'operations-jinho', name: '진호', title: '파트너 대응' }
+      { id: 'operations-kim', name: '김민수', title: '인사 담당' },
+      { id: 'operations-lee', name: '이영희', title: '재무 담당' }
     ]
   }
 ];
@@ -157,19 +170,19 @@ export const tickets: Ticket[] = [
   {
     id: 'T-097',
     title: '회의록 PDF 내보내기 기능 요청',
-    team: '제품팀',
+    team: '마케팅팀',
     teamSlug: 'product',
     status: '진행 중',
     priority: '보통',
     type: '기능 요청',
-    reporter: '운영팀',
+    reporter: '경영지원팀',
     createdAt: '2025-09-04',
     summary: '워크스페이스 밖으로 회의록을 공유할 수 있는 간단한 내보내기 경로가 필요합니다.'
   },
   {
     id: 'T-088',
     title: '입력 접수 중복 생성 버그',
-    team: '운영팀',
+    team: '경영지원팀',
     teamSlug: 'operations',
     status: '보류',
     priority: '긴급',
@@ -188,10 +201,10 @@ export const ticketDetails: Record<string, TicketDetail> = {
     priority: '높음',
     type: '버그',
     ownerTeam: '개발팀',
-    assignee: '재호',
+    assignee: '박정우',
     reporter: '고객지원',
     description: '모바일 화면에서는 제출 이후에만 검증 상태가 보입니다.',
-    history: ['접수됨', '개발팀 배정', '재호가 티켓을 인수함', 'iOS Safari 재현 확인'],
+    history: ['접수됨', '개발팀 배정', '박정우가 티켓을 인수함', 'iOS Safari 재현 확인'],
     comments: ['테스트 기기에서 재현했습니다.', '패치 이후 QA가 필요합니다.'],
     linkedMeetings: ['all-hands-weekly-sync-2025-09-05']
   },
@@ -201,11 +214,11 @@ export const ticketDetails: Record<string, TicketDetail> = {
     status: '진행 중',
     priority: '보통',
     type: '기능 요청',
-    ownerTeam: '제품팀',
-    assignee: '민지',
-    reporter: '운영팀',
+    ownerTeam: '마케팅팀',
+    assignee: '정하늘',
+    reporter: '경영지원팀',
     description: '내보내기 결과에는 제목, 댓글, 연결된 티켓이 유지되어야 합니다.',
-    history: ['접수됨', '제품팀 배정', '민지가 내보내기 범위를 검토함', '초안 작성 중'],
+    history: ['접수됨', '마케팅팀 배정', '정하늘이 내보내기 범위를 검토함', '초안 작성 중'],
     comments: ['PDF + 마크다운 내보내기를 함께 고려합니다.', '첫 버전은 가볍게 가는 것이 좋습니다.'],
     linkedMeetings: ['all-hands-weekly-sync-2025-09-05']
   },
@@ -215,11 +228,11 @@ export const ticketDetails: Record<string, TicketDetail> = {
     status: '보류',
     priority: '긴급',
     type: '버그',
-    ownerTeam: '운영팀',
-    assignee: '소라',
+    ownerTeam: '경영지원팀',
+    assignee: '김민수',
     reporter: '웹 폼',
     description: '사용자가 제출 버튼을 두 번 누르면 중복 티켓이 생길 수 있습니다.',
-    history: ['접수됨', '운영팀 배정', '중복 방지 규칙 문제 확인', '백엔드 수정 대기 중'],
+    history: ['접수됨', '경영지원팀 배정', '중복 방지 규칙 문제 확인', '백엔드 수정 대기 중'],
     comments: ['멱등 키를 추가해야 합니다.', '재시도 안전 처리가 필요합니다.'],
     linkedMeetings: ['all-hands-weekly-sync-2025-09-05']
   }
@@ -232,9 +245,9 @@ export const meetings: Meeting[] = [
     title: '전체 회의 주간 동기화',
     decisions: 3,
     comments: 8,
-    attendees: ['민지', '재호', '소라'],
+    attendees: ['홍길동', '김민수', '박정우', '정하늘'],
     agenda: ['들어온 티켓', '배포 장애', '회의록 내보내기 요청'],
-    decisionsList: ['개발팀이 T-102를 인수함', '제품팀이 PDF 내보내기 범위를 정리함', '운영팀이 중복 입력 문제를 수정함'],
+    decisionsList: ['개발팀이 T-102를 인수함', '마케팅팀이 PDF 내보내기 범위를 정리함', '경영지원팀이 중복 입력 문제를 수정함'],
     actionItems: ['모바일 검증 QA', '내보내기 명세 작성', '중복 접수 처리 보강'],
     linkedTickets: ['T-102', 'T-097', 'T-088']
   },
@@ -244,7 +257,7 @@ export const meetings: Meeting[] = [
     title: '전체 회의 주간 동기화',
     decisions: 2,
     comments: 5,
-    attendees: ['민지', '재호', '소라'],
+    attendees: ['홍길동', '김민수', '박정우', '정하늘'],
     agenda: ['주간 접수 검토', '로드맵 업데이트'],
     decisionsList: ['새 접수 큐 승인', '회의록 형식 표준화'],
     actionItems: ['템플릿 공개', '신규 멤버 초대'],

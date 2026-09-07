@@ -1,10 +1,7 @@
 import * as React from 'react';
 import {
   Background,
-  Controls,
   Handle,
-  MarkerType,
-  MiniMap,
   Position,
   ReactFlow,
   type Edge,
@@ -13,14 +10,14 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import type { OrgSheet, Team } from '../../lib/site-data';
+import type { OrgLeader, OrgSheet, Team } from '../../lib/site-data';
 import { cn } from '../../lib/utils';
+
+type LeaderNodeData = OrgLeader;
 
 type SheetNodeData = {
   name: string;
   description: string;
-  teamCount: number;
-  memberCount: number;
 };
 
 type TeamNodeData = {
@@ -35,39 +32,59 @@ type MemberNodeData = {
   title: string;
 };
 
-const NODE_WIDTH = 270;
-const TEAM_HEIGHT = 92;
-const MEMBER_HEIGHT = 38;
-const SHEET_PADDING = 24;
-const SHEET_HEADER_HEIGHT = 72;
-const TEAM_GAP = 20;
-const MEMBER_GAP = 10;
-const SHEET_GAP = 56;
+const FLOW_WIDTH = 1110;
+const SHEET_WIDTH = 325;
+const SHEET_HEIGHT = 360;
+const ROOT_WIDTH = 240;
+const ROOT_HEIGHT = 110;
+const TEAM_HEIGHT = 112;
+const MEMBER_HEIGHT = 104;
+const TEAM_PADDING_X = 22;
+const TEAM_PADDING_TOP = 22;
+const TEAM_PADDING_BOTTOM = 20;
+const TEAM_MEMBER_GAP = 18;
+const SHEET_GAP = 46;
 
-const toneBorder: Record<Team['tone'], string> = {
-  blue: 'border-blue-200',
-  green: 'border-emerald-200',
-  amber: 'border-amber-200'
+const toneRing: Record<Team['tone'], string> = {
+  blue: 'from-blue-500 to-indigo-500',
+  green: 'from-emerald-500 to-teal-500',
+  amber: 'from-amber-500 to-orange-500'
 };
 
-const toneAccent: Record<Team['tone'], string> = {
-  blue: 'bg-blue-500',
-  green: 'bg-emerald-500',
-  amber: 'bg-amber-500'
+const tonePill: Record<Team['tone'], string> = {
+  blue: 'bg-white/20 text-white',
+  green: 'bg-white/20 text-white',
+  amber: 'bg-white/20 text-white'
 };
+
+function initialOf(name: string) {
+  return name.trim().charAt(0);
+}
+
+function LeaderNode({ data }: NodeProps<LeaderNodeData>) {
+  return (
+    <div className="flex h-full w-full items-center gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-lg font-semibold text-white shadow-sm">
+        {data.avatar}
+      </div>
+      <div className="min-w-0">
+        <p className="text-lg font-semibold text-slate-900">{data.name}</p>
+        <p className="text-sm text-slate-500">{data.title}</p>
+        <p className="mt-1 text-xs text-slate-400">{data.subtitle}</p>
+      </div>
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
+    </div>
+  );
+}
 
 function SheetNode({ data }: NodeProps<SheetNodeData>) {
   return (
-    <div className="relative h-full w-full rounded-[28px] border border-dashed border-sky-200 bg-sky-50/50">
-      <div className="flex items-start justify-between gap-4 px-5 pb-4 pt-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-600">Sheet</p>
-          <h3 className="mt-1 text-lg font-semibold text-slate-950">{data.name}</h3>
-          <p className="mt-1 text-sm leading-6 text-slate-600">{data.description}</p>
-        </div>
-        <div className="rounded-full border border-sky-200 bg-white px-3 py-1 text-xs font-medium text-sky-700 shadow-sm">
-          {data.teamCount}팀 · {data.memberCount}명
-        </div>
+    <div className="relative h-full w-full rounded-[28px] border border-slate-200/80 bg-white/70">
+      <div className="absolute right-5 top-4 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium text-slate-500 shadow-sm">
+        {data.description}
+      </div>
+      <div className="absolute left-5 top-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">
+        {data.name}
       </div>
     </div>
   );
@@ -75,18 +92,20 @@ function SheetNode({ data }: NodeProps<SheetNodeData>) {
 
 function TeamNode({ data }: NodeProps<TeamNodeData>) {
   return (
-    <div className={cn('relative h-full rounded-2xl border bg-card p-4 shadow-soft', toneBorder[data.tone])}>
-      <Handle type="source" position={Position.Bottom} className="!h-3 !w-3 !border-2 !border-white !bg-slate-900" />
-      <div className={cn('absolute left-0 top-0 h-1.5 w-full rounded-t-2xl', toneAccent[data.tone])} />
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Team</p>
-      <div className="mt-2 flex items-start justify-between gap-3">
+    <div className={cn('relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br px-5 py-4 text-white shadow-[0_16px_40px_rgba(79,70,229,0.18)]', toneRing[data.tone])}>
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
+      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-foreground">{data.name}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">리드 {data.lead}</p>
+          <p className="text-sm font-semibold text-white/90">{data.name}</p>
+          <p className="mt-1 text-xs text-white/70">{data.lead}</p>
         </div>
-        <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+        <span className={cn('rounded-xl px-3 py-1 text-sm font-semibold backdrop-blur-sm', tonePill[data.tone])}>
           {data.memberCount}명
         </span>
+      </div>
+      <div className="mt-3 inline-flex w-fit rounded-lg bg-white/18 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm">
+        {data.name}
       </div>
     </div>
   );
@@ -94,167 +113,176 @@ function TeamNode({ data }: NodeProps<TeamNodeData>) {
 
 function MemberNode({ data }: NodeProps<MemberNodeData>) {
   return (
-    <div className="relative flex h-full items-center rounded-xl border border-border bg-background px-4 shadow-sm">
-      <Handle type="target" position={Position.Top} className="!h-2.5 !w-2.5 !border-2 !border-white !bg-slate-400" />
-      <div>
-        <p className="text-sm font-medium text-foreground">{data.name}</p>
-        <p className="text-xs text-muted-foreground">{data.title}</p>
+    <div className="flex h-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
+        {initialOf(data.name)}
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-slate-900">{data.name}</p>
+        <p className="text-sm text-slate-500">{data.title}</p>
       </div>
     </div>
   );
 }
 
 const nodeTypes = {
+  leader: LeaderNode,
   sheet: SheetNode,
   team: TeamNode,
   member: MemberNode
 };
 
-function buildGraph(sheets: OrgSheet[], teams: Team[]) {
+function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
   const teamMap = new Map(teams.map((team) => [team.slug, team]));
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  let yOffset = 0;
+  const topY = 0;
+  const sheetY = 170;
+  const sheetCount = sheets.length;
+  const totalSheetsWidth = sheetCount * SHEET_WIDTH + Math.max(sheetCount - 1, 0) * SHEET_GAP;
+  const startX = (FLOW_WIDTH - totalSheetsWidth) / 2;
 
-  sheets.forEach((sheet) => {
-    const sheetTeams = sheet.teamSlugs.map((slug) => teamMap.get(slug)).filter(Boolean) as Team[];
-    const teamCount = sheetTeams.length;
-    const memberCount = sheetTeams.reduce((total, team) => total + team.people.length, 0);
-    const columnWidth = (1100 - SHEET_PADDING * 2 - TEAM_GAP * Math.max(teamCount - 1, 0)) / teamCount;
-    const teamHeights = sheetTeams.map((team) => TEAM_HEIGHT + MEMBER_GAP + team.people.length * MEMBER_HEIGHT + Math.max(team.people.length - 1, 0) * MEMBER_GAP);
-    const innerHeight = Math.max(...teamHeights, TEAM_HEIGHT);
-    const sheetHeight = SHEET_HEADER_HEIGHT + innerHeight + SHEET_PADDING;
+  nodes.push({
+    id: 'leader',
+    type: 'leader',
+    position: { x: (FLOW_WIDTH - ROOT_WIDTH) / 2, y: topY },
+    data: leader,
+    style: {
+      width: ROOT_WIDTH,
+      height: ROOT_HEIGHT
+    },
+    draggable: false,
+    selectable: false
+  });
+
+  sheets.forEach((sheet, sheetIndex) => {
+    const team = teamMap.get(sheet.teamSlugs[0]);
+    if (!team) return;
+
+    const sheetX = startX + sheetIndex * (SHEET_WIDTH + SHEET_GAP);
+    const memberCount = team.people.length;
+    const sheetContentHeight = TEAM_PADDING_TOP + TEAM_HEIGHT + TEAM_MEMBER_GAP + memberCount * MEMBER_HEIGHT + Math.max(memberCount - 1, 0) * 18 + TEAM_PADDING_BOTTOM;
+    const sheetHeight = Math.max(SHEET_HEIGHT, sheetContentHeight + 56);
+    const teamX = 22;
+    const teamY = 60;
+    const memberStartY = teamY + TEAM_HEIGHT + TEAM_MEMBER_GAP;
 
     nodes.push({
       id: sheet.id,
       type: 'sheet',
-      position: { x: 0, y: yOffset },
+      position: { x: sheetX, y: sheetY },
       data: {
         name: sheet.name,
-        description: sheet.description,
-        teamCount,
-        memberCount
+        description: sheet.description
       },
       style: {
-        width: 1100,
+        width: SHEET_WIDTH,
         height: sheetHeight,
         zIndex: 0
       },
-      selectable: false,
-      draggable: false
+      draggable: false,
+      selectable: false
     });
 
-    sheetTeams.forEach((team, teamIndex) => {
-      const x = SHEET_PADDING + teamIndex * (columnWidth + TEAM_GAP);
-      const y = SHEET_HEADER_HEIGHT;
-      const memberTop = y + TEAM_HEIGHT + MEMBER_GAP;
+    nodes.push({
+      id: team.slug,
+      type: 'team',
+      parentId: sheet.id,
+      extent: 'parent',
+      position: { x: teamX, y: teamY },
+      data: {
+        name: team.name,
+        lead: team.lead,
+        memberCount: team.members,
+        tone: team.tone
+      },
+      style: {
+        width: SHEET_WIDTH - TEAM_PADDING_X * 2,
+        height: TEAM_HEIGHT,
+        zIndex: 2
+      },
+      draggable: false,
+      selectable: false
+    });
 
+    team.people.forEach((person, index) => {
       nodes.push({
-        id: team.slug,
-        type: 'team',
+        id: person.id,
+        type: 'member',
         parentId: sheet.id,
         extent: 'parent',
-        position: { x, y },
+        position: {
+          x: teamX,
+          y: memberStartY + index * (MEMBER_HEIGHT + 14)
+        },
         data: {
-          name: team.name,
-          lead: team.lead,
-          memberCount: team.members,
-          tone: team.tone
+          name: person.name,
+          title: person.title
         },
         style: {
-          width: columnWidth,
-          height: TEAM_HEIGHT,
+          width: SHEET_WIDTH - TEAM_PADDING_X * 2,
+          height: MEMBER_HEIGHT,
           zIndex: 2
         },
         draggable: false,
         selectable: false
       });
 
-      team.people.forEach((person, memberIndex) => {
-        nodes.push({
-          id: person.id,
-          type: 'member',
-          parentId: sheet.id,
-          extent: 'parent',
-          position: {
-            x,
-            y: memberTop + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
-          },
-          data: {
-            name: person.name,
-            title: person.title
-          },
-          style: {
-            width: columnWidth,
-            height: MEMBER_HEIGHT,
-            zIndex: 2
-          },
-          draggable: false,
-          selectable: false
-        });
-
-        edges.push({
-          id: `${team.slug}-${person.id}`,
-          source: team.slug,
-          target: person.id,
-          type: 'smoothstep',
-          animated: false,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 14,
-            height: 14,
-            color: 'rgba(100,116,139,0.7)'
-          },
-          style: {
-            stroke: 'rgba(100,116,139,0.7)',
-            strokeWidth: 1.5
-          }
-        });
+      edges.push({
+        id: `${team.slug}-${person.id}`,
+        source: team.slug,
+        target: person.id,
+        type: 'smoothstep',
+        style: {
+          stroke: '#d1d5db',
+          strokeWidth: 1.5
+        }
       });
     });
 
-    yOffset += sheetHeight + SHEET_GAP;
+    edges.push({
+      id: `leader-${team.slug}`,
+      source: 'leader',
+      target: team.slug,
+      type: 'smoothstep',
+      style: {
+        stroke: '#d1d5db',
+        strokeWidth: 1.5
+      }
+    });
   });
 
   return { nodes, edges };
 }
 
 type OrganizationFlowProps = {
+  leader: OrgLeader;
   sheets: OrgSheet[];
   teams: Team[];
 };
 
-export function OrganizationFlow({ sheets, teams }: OrganizationFlowProps) {
-  const { nodes, edges } = React.useMemo(() => buildGraph(sheets, teams), [sheets, teams]);
+export function OrganizationFlow({ leader, sheets, teams }: OrganizationFlowProps) {
+  const { nodes, edges } = React.useMemo(() => buildGraph(leader, sheets, teams), [leader, sheets, teams]);
 
   return (
-    <div className="h-[780px] w-full overflow-hidden rounded-3xl border border-border bg-card">
+    <div className="h-[760px] w-full overflow-hidden rounded-[32px] border border-slate-200 bg-[#fcfcfd]">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.12 }}
+        fitViewOptions={{ padding: 0.18 }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
-        panOnDrag
+        panOnDrag={false}
+        zoomOnScroll={false}
         zoomOnDoubleClick={false}
-        minZoom={0.45}
-        maxZoom={1.2}
+        minZoom={0.7}
+        maxZoom={1.1}
       >
-        <Background gap={24} size={1} color="rgba(148, 163, 184, 0.22)" />
-        <MiniMap
-          pannable
-          zoomable
-          nodeColor={(node) => {
-            if (node.type === 'sheet') return 'rgba(14, 165, 233, 0.22)';
-            if (node.type === 'team') return 'rgba(15, 23, 42, 0.5)';
-            return 'rgba(100, 116, 139, 0.45)';
-          }}
-          maskColor="rgba(15, 23, 42, 0.08)"
-        />
-        <Controls />
+        <Background gap={24} size={1} color="rgba(148, 163, 184, 0.08)" />
       </ReactFlow>
     </div>
   );

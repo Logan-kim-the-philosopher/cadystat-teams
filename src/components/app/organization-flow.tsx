@@ -221,6 +221,9 @@ function buildGraph(units: OrgUnit[]) {
         }
       });
 
+      const memberNodeIds = new Map<string, string>([[leadPerson.id, leadNodeId]]);
+      members.forEach((person) => memberNodeIds.set(person.id, person.id));
+
       members.forEach((person, memberIndex) => {
         const memberNodeId = person.id;
         nodes.push({
@@ -244,9 +247,12 @@ function buildGraph(units: OrgUnit[]) {
           selectable: false
         });
 
+        const reportingNodeId = person.reportsToMemberId ? memberNodeIds.get(person.reportsToMemberId) : leadNodeId;
+        if (!reportingNodeId) return;
+
         edges.push({
-          id: `${leadNodeId}-${memberNodeId}`,
-          source: leadNodeId,
+          id: `${reportingNodeId}-${memberNodeId}`,
+          source: reportingNodeId,
           target: memberNodeId,
           type: 'smoothstep',
           style: {

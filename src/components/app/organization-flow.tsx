@@ -399,9 +399,12 @@ function buildGraph(units: OrgUnit[]) {
       const node = nodesById.get(nodeId);
       const position = memberGraph.node(nodeId);
       if (!node || !position) return;
+      const isJunction = nodeId.endsWith('-junction');
+      const nodeWidth = isJunction ? 1 : memberWidth;
+      const nodeHeight = isJunction ? 1 : nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT;
       node.position = {
-        x: nextX + memberOffsetX + position.x - memberWidth / 2,
-        y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - (nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT) / 2
+        x: nextX + memberOffsetX + position.x - nodeWidth / 2,
+        y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - nodeHeight / 2
       };
     });
 

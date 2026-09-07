@@ -1,0 +1,71 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { Badge } from '../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { SectionTitle } from '../components/app/section-title';
+import { teams } from '../lib/site-data';
+---
+
+<SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
+  <SectionTitle
+    eyebrow="조직도"
+    title="실시간 팀 구조"
+    description="팀은 생성하고 수정할 수 있으며, 변화는 포털에서 바로 보이도록 설계합니다."
+  >
+    <Badge variant="outline">3개 팀</Badge>
+  </SectionTitle>
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">조직도</CardTitle>
+        <CardDescription>간단한 계층 구조 미리보기</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-6">
+          <div class="rounded-2xl border border-dashed border-blue-200 bg-blue-50/60 p-4">
+            <div class="text-xs font-semibold uppercase tracking-[0.2em] text-blue-600">루트</div>
+            <div class="mt-1 text-lg font-semibold">회사</div>
+          </div>
+          <div class="grid gap-4 md:grid-cols-3">
+            {teams.map((team) => (
+              <a href={`/organization/${team.slug}`} class="rounded-2xl border border-border bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-md">
+                <div class="flex items-center justify-between gap-3">
+                  <h3 class="font-semibold">{team.name}</h3>
+                  <Badge variant={team.tone}>{team.members}명</Badge>
+                </div>
+                <p class="mt-3 text-sm leading-6 text-muted-foreground">{team.description}</p>
+                <div class="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+                  <span>리더: {team.lead}</span>
+                  <span>열린 티켓 {team.tickets}개</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">팀 목록</CardTitle>
+        <CardDescription>누가 무엇을 맡는지</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-4">
+          {teams.map((team) => (
+            <a href={`/organization/${team.slug}`} class="block rounded-xl border border-border p-4 transition hover:bg-muted/50">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="font-semibold">{team.name}</h3>
+                  <p class="mt-1 text-sm text-muted-foreground">리더 {team.lead} · {team.members}명</p>
+                </div>
+                <Badge variant="outline">열린 티켓 {team.tickets}개</Badge>
+              </div>
+            </a>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</SiteLayout>

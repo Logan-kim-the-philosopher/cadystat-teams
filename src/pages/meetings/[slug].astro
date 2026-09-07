@@ -1,0 +1,110 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { meetingDetails } from '../../lib/site-data';
+
+export function getStaticPaths() {
+  return Object.keys(meetingDetails).map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const meeting = meetingDetails[slug];
+---
+
+<SiteLayout title={`${meeting?.title ?? '회의록'} · 회의록`} description="전체 회의록 상세 화면">
+  {meeting ? (
+    <div class="space-y-6">
+      <Card>
+        <CardHeader>
+          <div class="flex flex-wrap items-center gap-2">
+            <Badge variant="blue">전체회의</Badge>
+            <Badge variant="outline">{meeting.date}</Badge>
+            <Badge variant="outline">댓글 {meeting.comments}</Badge>
+          </div>
+          <CardTitle className="text-3xl">{meeting.title}</CardTitle>
+          <CardDescription>회사 전체 회의 기록과 연결된 티켓, 댓글 흐름을 한 페이지에서 봅니다.</CardDescription>
+        </CardHeader>
+      </Card>
+
+      <div class="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">안건</CardTitle>
+            <CardDescription>논의한 주제</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul class="space-y-3 text-sm text-muted-foreground">
+              {meeting.agenda.map((item) => <li class="rounded-xl border border-border bg-muted/40 p-3">{item}</li>)}
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">참석 및 후속</CardTitle>
+            <CardDescription>누가 있었고 무엇을 할지</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-4 text-sm">
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">참석자</p>
+                <p class="mt-2 text-foreground">{meeting.attendees.join(', ')}</p>
+              </div>
+              <div>
+                <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">액션 아이템</p>
+                <ul class="mt-2 space-y-2 text-muted-foreground">
+                  {meeting.actionItems.map((item) => <li>• {item}</li>)}
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">결정사항</CardTitle>
+            <CardDescription>확정된 내용</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ol class="space-y-3 text-sm text-muted-foreground">
+              {meeting.decisionsList.map((item, index) => (
+                <li class="flex gap-3">
+                  <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{index + 1}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">연결된 티켓</CardTitle>
+            <CardDescription>회의에서 다룬 항목</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-2">
+              {meeting.linkedTickets.length ? meeting.linkedTickets.map((ticketId) => (
+                <a href={`/tickets/${ticketId}`} class="block rounded-xl border border-border p-3 text-sm transition hover:bg-muted/50">
+                  {ticketId}
+                </a>
+              )) : <p class="text-sm text-muted-foreground">연결된 티켓이 아직 없습니다.</p>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  ) : (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">회의록을 찾을 수 없음</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p class="text-sm text-muted-foreground">요청한 회의록이 존재하지 않습니다.</p>
+      </CardContent>
+    </Card>
+  )}
+</SiteLayout>

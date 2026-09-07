@@ -1,0 +1,76 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { teamDetails } from '../../lib/site-data';
+
+export function getStaticPaths() {
+  return Object.keys(teamDetails).map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const team = teamDetails[slug];
+---
+
+<SiteLayout title={`${team?.name ?? '팀'} · 조직도`} description="팀 상세 화면">
+  {team ? (
+    <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <Card>
+        <CardHeader>
+          <div class="flex flex-wrap items-center gap-2">
+            <Badge variant={team.tone}>{team.lead}</Badge>
+            <Badge variant="outline">{team.members}명</Badge>
+            <Badge variant="outline">열린 티켓 {team.tickets}개</Badge>
+          </div>
+          <CardTitle className="text-3xl">{team.name}</CardTitle>
+          <CardDescription>{team.description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div class="grid gap-3 sm:grid-cols-3">
+            {team.responsibilities.map((item) => (
+              <div class="rounded-xl border border-border bg-muted/50 p-4 text-sm">
+                {item}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">팀 정보</CardTitle>
+          <CardDescription>담당 범위와 현재 상태</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <dl class="space-y-4 text-sm">
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">리더</dt>
+              <dd class="font-medium">{team.lead}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">멤버 수</dt>
+              <dd class="font-medium">{team.members}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">열린 티켓</dt>
+              <dd class="font-medium">{team.tickets}</dd>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <dt class="text-muted-foreground">상태</dt>
+              <dd><Badge variant="green">활성</Badge></dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+    </div>
+  ) : (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">팀을 찾을 수 없음</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p class="text-sm text-muted-foreground">요청한 팀이 존재하지 않습니다.</p>
+      </CardContent>
+    </Card>
+  )}
+</SiteLayout>

@@ -1,0 +1,28 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { Badge } from '../../components/ui/badge';
+import { MetricCard } from '../../components/app/metric-card';
+import { SectionTitle } from '../../components/app/section-title';
+import { TicketBrowser } from '../../components/app/ticket-browser';
+import { tickets } from '../../lib/site-data';
+---
+
+<SiteLayout title="티켓 · cody-stat" description="버그와 기능 요청을 받는 단일 접수 큐">
+  <SectionTitle
+    eyebrow="티켓"
+    title="단일 접수 큐"
+    description="이 큐는 팀이 이슈를 가져가고, 이관 기록을 남기며, 상태를 추적하는 유일한 장소입니다."
+  >
+    <Badge variant="outline">인수 우선 흐름</Badge>
+  </SectionTitle>
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-3">
+    <MetricCard label="긴급" value="1" hint="즉시 확인 필요" />
+    <MetricCard label="보류" value="1" hint="원인 정리 대기" />
+    <MetricCard label="진행 중" value="1" hint="담당 팀이 작업 중" />
+  </div>
+
+  <div class="mt-6">
+    <TicketBrowser client:load tickets={tickets} />
+  </div>
+</SiteLayout>

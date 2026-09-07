@@ -1,0 +1,56 @@
+---
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { SectionTitle } from '../../components/app/section-title';
+import { meetings } from '../../lib/site-data';
+---
+
+<SiteLayout title="회의록 · cody-stat" description="전체 회의 기록과 연결된 댓글">
+  <SectionTitle
+    eyebrow="회의록"
+    title="전체 회의록"
+    description="회사 전체 회의 기록만 이곳에 보관합니다. 팀별 회의는 다른 공간에서 따로 운영합니다."
+  >
+    <Badge variant="outline">댓글 사용 가능</Badge>
+  </SectionTitle>
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">회의 규칙</CardTitle>
+        <CardDescription>일관성을 유지합니다</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul class="space-y-3 text-sm leading-6 text-muted-foreground">
+          <li>• 회사 전체 회의만 한 타임라인에 기록합니다.</li>
+          <li>• 관련 티켓을 연결해 결정 사항을 추적합니다.</li>
+          <li>• 댓글은 각 회의록에 붙어 있도록 유지합니다.</li>
+        </ul>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">회의록 보관함</CardTitle>
+        <CardDescription>최근 전체 회의 기록</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-3">
+          {meetings.map((meeting) => (
+            <a href={`/meetings/${meeting.slug}`} class="block rounded-2xl border border-border p-4 transition hover:bg-muted/50">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <p class="text-sm text-muted-foreground">{meeting.date}</p>
+                  <h3 class="mt-1 font-semibold">{meeting.title}</h3>
+                  <p class="mt-2 text-sm text-muted-foreground">결정사항 {meeting.decisions} · 댓글 {meeting.comments}</p>
+                </div>
+                <Badge variant="blue">전체회의</Badge>
+              </div>
+            </a>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</SiteLayout>

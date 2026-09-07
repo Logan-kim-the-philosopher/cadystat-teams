@@ -1,0 +1,44 @@
+---
+import '../styles/global.css';
+import { HeaderTabs } from '../components/app/header-tabs';
+
+const props = Astro.props;
+const title = props.title ?? 'cody-stat';
+const description = props.description ?? '팀 운영 포털';
+const currentPath = props.currentPath ?? Astro.url.pathname;
+---
+
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+  </head>
+  <body class="min-h-screen bg-background text-foreground">
+    <div class="min-h-screen bg-background">
+      <header class="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl">
+        <div class="mx-auto grid w-full max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:px-6">
+          <a href="/" class="flex items-center gap-3">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm">
+              CS
+            </div>
+          </a>
+
+          <div class="min-w-0 lg:justify-self-center">
+            <HeaderTabs currentPath={currentPath} />
+          </div>
+
+          <div class="flex items-center gap-2 lg:justify-self-end">
+            <span class="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">Plane</span>
+            <span class="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">shadcn</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

@@ -168,7 +168,7 @@ function buildGraph(units: OrgUnit[]) {
   let cursorX = Math.max(24, (FLOW_WIDTH - totalWidth) / 2);
 
   layouts.forEach((layout, index) => {
-    const { sheet, team, width, height, mode, leadPerson, members } = layout;
+    const { sheet, width, height, mode, leadPerson, members } = layout;
     const sheetX = cursorX;
     cursorX += width + (index < layouts.length - 1 ? SHEET_GAP : 0);
     const innerWidth = width - SHEET_PADDING_X * 2;
@@ -180,7 +180,7 @@ function buildGraph(units: OrgUnit[]) {
       data: {
         name: sheet.name,
         description: sheet.description,
-        memberCount: team.people.length
+        memberCount: sheet.people.length
       },
       style: {
         width,

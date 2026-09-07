@@ -83,6 +83,7 @@
 ## 문서
 - [화면 설계](docs/screen-design.md)
 - [데이터 모델 상세화](docs/data-model.md)
+- [조직도 데이터 스키마](docs/organization-schema.md)
 - [Plane 기준 기능 분해](docs/plane-feature-split.md)
 - [초기 구현 순서](docs/implementation-roadmap.md)
 - [프로젝트 구조](docs/project-structure.md)

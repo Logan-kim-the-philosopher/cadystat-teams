@@ -353,16 +353,16 @@ function buildGraph(units: OrgUnit[]) {
     childrenByManager.forEach((children, managerId) => {
       if (children.length < 2) {
         memberGraph.setEdge(managerId, children[0]);
-        edges.push({ id: `${managerId}-${children[0]}`, source: managerId, target: children[0], type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+        edges.push({ id: `${managerId}-${children[0]}`, source: managerId, target: children[0], type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
         return;
       }
       const junctionId = `${managerId}-junction`;
       memberGraph.setNode(junctionId, { width: 1, height: 1 });
       memberGraph.setEdge(managerId, junctionId);
-      edges.push({ id: `${managerId}-${junctionId}`, source: managerId, target: junctionId, type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+      edges.push({ id: `${managerId}-${junctionId}`, source: managerId, target: junctionId, type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
       children.forEach((childId) => {
         memberGraph.setEdge(junctionId, childId);
-        edges.push({ id: `${junctionId}-${childId}`, source: junctionId, target: childId, type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+        edges.push({ id: `${junctionId}-${childId}`, source: junctionId, target: childId, type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
       });
       nodes.push({
         id: junctionId,

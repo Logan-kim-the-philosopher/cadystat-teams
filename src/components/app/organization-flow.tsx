@@ -133,6 +133,20 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
 
   if (hasLead) {
     const memberCount = unit.people.length;
+    const depths = new Map<string, number>([[leadPerson.id, 0]]);
+    const pending = [...members];
+    while (pending.length > 0) {
+      const person = pending.shift();
+      if (!person) break;
+      const parentDepth = person.reportsToMemberId ? depths.get(person.reportsToMemberId) : 0;
+      if (parentDepth === undefined) {
+        pending.push(person);
+        continue;
+      }
+      depths.set(person.id, parentDepth + 1);
+    }
+    const maxBreadth = Math.max(...Array.from(depths.values()).map((depth) => Array.from(depths.values()).filter((value) => value === depth).length), 1);
+    const width = Math.max(SHEET_WIDTH, SHEET_PADDING_X * 2 + maxBreadth * HIER_MEMBER_WIDTH + Math.max(maxBreadth - 1, 0) * HIER_MEMBER_GAP);
     const height = Math.max(
       276,
       SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + members.length * HIER_MEMBER_HEIGHT + Math.max(members.length - 1, 0) * HIER_MEMBER_GAP + SHEET_PADDING_Y
@@ -141,7 +155,7 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
     return {
       sheet: unit,
       team: unit,
-      width: SHEET_WIDTH,
+      width,
       height,
       mode: 'hierarchical',
       leadPerson,
@@ -210,7 +224,7 @@ function buildGraph(units: OrgUnit[]) {
           role: '팀장'
         },
         style: {
-          width: innerWidth,
+          width: HIER_MEMBER_WIDTH,
           height: LEAD_CARD_HEIGHT
         },
         draggable: false,
@@ -247,7 +261,7 @@ function buildGraph(units: OrgUnit[]) {
             role: '팀원'
           },
           style: {
-            width: innerWidth,
+            width: HIER_MEMBER_WIDTH,
             height: HIER_MEMBER_HEIGHT
           },
           draggable: false,
@@ -348,7 +362,7 @@ function buildGraph(units: OrgUnit[]) {
 
     // Lay out members from reportsToMemberId instead of treating them as one list.
     const memberGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-    const memberWidth = layout.width - SHEET_PADDING_X * 2;
+    const memberWidth = HIER_MEMBER_WIDTH;
     memberGraph.setGraph({ rankdir: 'TB', nodesep: 16, ranksep: 24, marginx: 0, marginy: 0 });
     const leadNodeId = `${layout.sheet.id}-lead`;
     memberGraph.setNode(leadNodeId, { width: memberWidth, height: LEAD_CARD_HEIGHT });

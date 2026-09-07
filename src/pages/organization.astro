@@ -1,7 +1,6 @@
 ---
 import SiteLayout from '../layouts/SiteLayout.astro';
 import { Badge } from '../components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { SectionTitle } from '../components/app/section-title';
 import { OrganizationFlow } from '../components/app/organization-flow';
 import { orgLeader, orgSheets, teams } from '../lib/site-data';
@@ -18,13 +17,7 @@ const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
     <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams · {totalMembers} members</Badge>
   </SectionTitle>
 
-  <Card className="mt-6 overflow-hidden">
-    <CardHeader>
-      <CardTitle className="text-lg">조직도 목업</CardTitle>
-      <CardDescription>대표이사 → 팀 → 팀원 순서의 계층 구조</CardDescription>
-    </CardHeader>
-    <CardContent className="p-0">
-      <OrganizationFlow client:only="react" leader={orgLeader} teams={teams} />
-    </CardContent>
-  </Card>
+  <div className="mt-6">
+    <OrganizationFlow client:only="react" leader={orgLeader} teams={teams} />
+  </div>
 </SiteLayout>

@@ -88,7 +88,7 @@ export const orgLeader: OrgLeader = {
 export const orgSheets: OrgSheet[] = [
   {
     id: 'sheet-operations',
-    name: '경영지원 시트',
+    name: '경영지원팀',
     description: '인사, 총무, 재무',
     teamSlugs: ['operations']
   },

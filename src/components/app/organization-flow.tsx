@@ -3,21 +3,13 @@ import { Background, Handle, Position, ReactFlow, type Edge, type Node, type Nod
 import '@xyflow/react/dist/style.css';
 
 import type { OrgLeader, OrgSheet, Team } from '../../lib/site-data';
-import { cn } from '../../lib/utils';
 
 type LeaderNodeData = OrgLeader;
 
 type SheetNodeData = {
   name: string;
   description: string;
-  teamCount: number;
-};
-
-type TeamNodeData = {
-  name: string;
-  lead: string;
   memberCount: number;
-  tone: Team['tone'];
 };
 
 type MemberNodeData = {
@@ -26,23 +18,19 @@ type MemberNodeData = {
 };
 
 const FLOW_WIDTH = 1110;
-const TEAM_WIDTH = 300;
-const TEAM_HEIGHT = 112;
-const MEMBER_WIDTH = 300;
-const MEMBER_HEIGHT = 88;
+const SHEET_WIDTH = 332;
+const SHEET_GAP = 40;
 const LEADER_WIDTH = 240;
 const LEADER_HEIGHT = 108;
+const MEMBER_WIDTH = 300;
+const MEMBER_HEIGHT = 88;
 const TOP_Y = 0;
-const TEAM_Y = 190;
-const MEMBER_Y = TEAM_Y + TEAM_HEIGHT + 34;
-const TEAM_GAP = 52;
+const SHEET_Y = 190;
+const SHEET_HEADER_HEIGHT = 64;
+const SHEET_PADDING_X = 16;
+const SHEET_PADDING_Y = 18;
+const SHEET_MEMBER_GAP = 16;
 const MEMBER_GAP = 16;
-
-const toneCard: Record<Team['tone'], string> = {
-  blue: 'from-blue-500 to-indigo-500',
-  green: 'from-emerald-500 to-teal-500',
-  amber: 'from-amber-500 to-orange-500'
-};
 
 function initialOf(name: string) {
   return name.trim().charAt(0);
@@ -70,39 +58,15 @@ function SheetNode({ data }: NodeProps<SheetNodeData>) {
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">Sheet</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-300">Team</p>
           <h3 className="mt-1 text-sm font-semibold text-slate-900">{data.name}</h3>
           <p className="mt-1 text-xs leading-5 text-slate-500">{data.description}</p>
         </div>
         <span className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-          {data.teamCount}팀
+          {data.memberCount}명
         </span>
       </div>
       <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
-    </div>
-  );
-}
-
-function TeamNode({ data }: NodeProps<TeamNodeData>) {
-  return (
-    <div
-      className={cn(
-        'relative flex h-full flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br px-5 py-4 text-white shadow-[0_16px_40px_rgba(79,70,229,0.18)]',
-        toneCard[data.tone]
-      )}
-    >
-      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
-      <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-white/90">{data.name}</p>
-          <p className="mt-1 text-xs text-white/70">{data.lead}</p>
-        </div>
-        <span className="rounded-xl bg-white/20 px-3 py-1 text-sm font-semibold backdrop-blur-sm">{data.memberCount}명</span>
-      </div>
-      <div className="mt-3 inline-flex w-fit rounded-lg bg-white/18 px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur-sm">
-        팀 조직
-      </div>
     </div>
   );
 }
@@ -125,23 +89,18 @@ function MemberNode({ data }: NodeProps<MemberNodeData>) {
 const nodeTypes = {
   leader: LeaderNode,
   sheet: SheetNode,
-  team: TeamNode,
   member: MemberNode
 };
 
 function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
-  const teamMap = new Map(teams.map((team) => [team.slug, team]));
+  const teamMap = new Map(teams.map((team) => [team.sheetId, team]));
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  const sheetCount = sheets.length;
-  const sheetWidth = 332;
-  const sheetGap = 40;
-  const totalWidth = sheetCount * sheetWidth + Math.max(sheetCount - 1, 0) * sheetGap;
+  const totalWidth = sheets.length * SHEET_WIDTH + Math.max(sheets.length - 1, 0) * SHEET_GAP;
   const startX = (FLOW_WIDTH - totalWidth) / 2;
-  const sheetTop = 170;
-  const teamX = 16;
-  const teamY = 64;
-  const memberStartY = teamY + TEAM_HEIGHT + 18;
+  const sheetTop = SHEET_Y;
+  const memberLeft = SHEET_PADDING_X;
+  const memberTop = SHEET_HEADER_HEIGHT;
 
   nodes.push({
     id: 'leader',
@@ -157,12 +116,16 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
   });
 
   sheets.forEach((sheet, index) => {
-    const team = teamMap.get(sheet.teamSlugs[0]);
+    const team = teamMap.get(sheet.id);
     if (!team) return;
 
-    const sheetX = startX + index * (sheetWidth + sheetGap);
-    const sheetHeight = Math.max(310, memberStartY + team.people.length * MEMBER_HEIGHT + Math.max(team.people.length - 1, 0) * MEMBER_GAP + 20);
-    const innerWidth = sheetWidth - teamX * 2;
+    const memberCount = team.people.length;
+    const sheetHeight = Math.max(
+      260,
+      SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + memberCount * MEMBER_HEIGHT + Math.max(memberCount - 1, 0) * SHEET_MEMBER_GAP + SHEET_PADDING_Y
+    );
+    const sheetX = startX + index * (SHEET_WIDTH + SHEET_GAP);
+    const innerWidth = SHEET_WIDTH - SHEET_PADDING_X * 2;
 
     nodes.push({
       id: sheet.id,
@@ -171,31 +134,11 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
       data: {
         name: sheet.name,
         description: sheet.description,
-        teamCount: sheet.teamSlugs.length
+        memberCount
       },
       style: {
-        width: sheetWidth,
+        width: SHEET_WIDTH,
         height: sheetHeight
-      },
-      draggable: false,
-      selectable: false
-    });
-
-    nodes.push({
-      id: team.slug,
-      type: 'team',
-      parentId: sheet.id,
-      extent: 'parent',
-      position: { x: teamX, y: teamY },
-      data: {
-        name: team.name,
-        lead: team.lead,
-        memberCount: team.members,
-        tone: team.tone
-      },
-      style: {
-        width: innerWidth,
-        height: TEAM_HEIGHT
       },
       draggable: false,
       selectable: false
@@ -219,8 +162,8 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
         parentId: sheet.id,
         extent: 'parent',
         position: {
-          x: teamX,
-          y: memberStartY + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
+          x: memberLeft,
+          y: memberTop + SHEET_PADDING_Y + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
         },
         data: {
           name: person.name,
@@ -235,8 +178,8 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
       });
 
       edges.push({
-        id: `${team.slug}-${person.id}`,
-        source: team.slug,
+        id: `${sheet.id}-${person.id}`,
+        source: sheet.id,
         target: person.id,
         type: 'smoothstep',
         style: {

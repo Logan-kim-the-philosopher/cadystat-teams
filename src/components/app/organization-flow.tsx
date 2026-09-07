@@ -373,7 +373,11 @@ function buildGraph(units: OrgUnit[]) {
     dagre.layout(memberGraph);
 
     const memberGraphSize = memberGraph.graph();
-    const memberOffsetX = (layout.width - (memberGraphSize.width ?? 0)) / 2;
+    const memberNodeIds = [leadNodeId, ...layout.members.map((person) => person.id)];
+    const memberPositions = memberNodeIds.map((nodeId) => memberGraph.node(nodeId));
+    const minMemberX = Math.min(...memberPositions.map((position) => position.x - memberWidth / 2));
+    const maxMemberX = Math.max(...memberPositions.map((position) => position.x + memberWidth / 2));
+    const memberOffsetX = (layout.width - (maxMemberX - minMemberX)) / 2 - minMemberX;
     if (sheetNode) {
       sheetNode.style = {
         ...sheetNode.style,

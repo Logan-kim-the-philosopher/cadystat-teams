@@ -8,7 +8,7 @@ export type Team = {
   slug: string;
   sheetId: string;
   name: string;
-  lead: string;
+  lead: string | null;
   members: number;
   tickets: number;
   description: string;

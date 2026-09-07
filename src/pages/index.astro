@@ -65,7 +65,7 @@ const priorityVariant = (priority: string) => {
                   <div>
                     <div class="flex items-center gap-2">
                       <h3 class="font-semibold">{team.name}</h3>
-                      <Badge variant={team.tone}>{team.lead}</Badge>
+                      <Badge variant={team.tone}>{team.lead ?? '팀장 없음'}</Badge>
                     </div>
                     <p class="mt-2 text-sm leading-6 text-muted-foreground">{team.description}</p>
                   </div>

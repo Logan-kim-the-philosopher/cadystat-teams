@@ -18,7 +18,7 @@ const team = teamDetails[slug];
       <Card>
         <CardHeader>
           <div class="flex flex-wrap items-center gap-2">
-            <Badge variant={team.tone}>{team.lead}</Badge>
+            <Badge variant={team.tone}>{team.lead ?? '팀장 없음'}</Badge>
             <Badge variant="outline">{team.members}명</Badge>
             <Badge variant="outline">열린 티켓 {team.tickets}개</Badge>
           </div>
@@ -45,7 +45,7 @@ const team = teamDetails[slug];
           <dl class="space-y-4 text-sm">
             <div class="flex items-center justify-between gap-4">
               <dt class="text-muted-foreground">리더</dt>
-              <dd class="font-medium">{team.lead}</dd>
+              <dd class="font-medium">{team.lead ?? '없음'}</dd>
             </div>
             <div class="flex items-center justify-between gap-4">
               <dt class="text-muted-foreground">멤버 수</dt>
@@ -76,7 +76,7 @@ const team = teamDetails[slug];
                   <p class="font-medium">{person.name}</p>
                   <p class="text-sm text-muted-foreground">{person.title}</p>
                 </div>
-                {person.name === team.lead ? <Badge variant="outline">리드</Badge> : null}
+                {team.lead && person.name === team.lead ? <Badge variant="outline">리드</Badge> : null}
               </div>
             ))}
           </div>

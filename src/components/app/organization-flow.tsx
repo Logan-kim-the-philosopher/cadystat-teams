@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Background, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-import type { OrgLeader, OrgSheet, OrgMember, Team } from '../../lib/site-data';
+import type { OrgMember, OrgSheet, Team } from '../../lib/site-data';
 
 type SheetNodeData = {
   name: string;
@@ -19,6 +19,17 @@ type LeadNodeData = {
 type MemberNodeData = {
   name: string;
   title: string;
+  compact?: boolean;
+};
+
+type SheetLayout = {
+  sheet: OrgSheet;
+  team: Team;
+  width: number;
+  height: number;
+  mode: 'hierarchical' | 'horizontal';
+  leadPerson: OrgMember | null;
+  members: OrgMember[];
 };
 
 const FLOW_WIDTH = 1110;
@@ -28,14 +39,14 @@ const SHEET_HEADER_HEIGHT = 64;
 const SHEET_PADDING_X = 16;
 const SHEET_PADDING_Y = 18;
 const LEAD_CARD_HEIGHT = 92;
-const LEAD_MEMBER_GAP = 16;
-const MEMBER_WIDTH = 300;
-const MEMBER_HEIGHT = 88;
-const MEMBER_GAP = 16;
+const HIER_MEMBER_WIDTH = 300;
+const HIER_MEMBER_HEIGHT = 88;
+const HIER_MEMBER_GAP = 16;
+const FLAT_MEMBER_WIDTH = 124;
+const FLAT_MEMBER_HEIGHT = 72;
+const FLAT_MEMBER_GAP = 12;
 const SHEET_Y = 190;
 const TOP_Y = 0;
-const LEADER_WIDTH = 240;
-const LEADER_HEIGHT = 108;
 
 function initialOf(name: string) {
   return name.trim().charAt(0);
@@ -77,14 +88,26 @@ function LeadNode({ data }: NodeProps<LeadNodeData>) {
 
 function MemberNode({ data }: NodeProps<MemberNodeData>) {
   return (
-    <div className="flex h-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-      <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
+    <div
+      className={
+        data.compact
+          ? 'flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
+          : 'flex h-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
+      }
+    >
+      {!data.compact ? <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" /> : null}
+      <div
+        className={
+          data.compact
+            ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white shadow-sm'
+            : 'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm'
+        }
+      >
         {initialOf(data.name)}
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-900">{data.name}</p>
-        <p className="text-sm text-slate-500">{data.title}</p>
+        <p className={data.compact ? 'text-sm font-semibold text-slate-900' : 'text-sm font-semibold text-slate-900'}>{data.name}</p>
+        <p className={data.compact ? 'text-xs text-slate-500' : 'text-sm text-slate-500'}>{data.title}</p>
       </div>
     </div>
   );
@@ -96,35 +119,65 @@ const nodeTypes = {
   member: MemberNode
 };
 
-function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
+function resolveSheetLayout(sheet: OrgSheet, team: Team): SheetLayout {
+  const leadName = team.lead?.trim();
+  const leadIndex = leadName ? team.people.findIndex((person) => person.name === leadName) : -1;
+  const hasLead = leadIndex >= 0;
+  const leadPerson = hasLead ? team.people[leadIndex] : null;
+  const members = hasLead ? team.people.filter((_, index) => index !== leadIndex) : team.people;
+
+  if (hasLead) {
+    const memberCount = team.people.length;
+    const height = Math.max(
+      276,
+      SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + members.length * HIER_MEMBER_HEIGHT + Math.max(members.length - 1, 0) * HIER_MEMBER_GAP + SHEET_PADDING_Y
+    );
+
+    return {
+      sheet,
+      team,
+      width: SHEET_WIDTH,
+      height,
+      mode: 'hierarchical',
+      leadPerson,
+      members
+    };
+  }
+
+  const rowWidth = members.length * FLAT_MEMBER_WIDTH + Math.max(members.length - 1, 0) * FLAT_MEMBER_GAP;
+  const width = Math.max(SHEET_WIDTH, SHEET_PADDING_X * 2 + rowWidth);
+  const height = SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + FLAT_MEMBER_HEIGHT + SHEET_PADDING_Y;
+
+  return {
+    sheet,
+    team,
+    width,
+    height,
+    mode: 'horizontal',
+    leadPerson: null,
+    members
+  };
+}
+
+function buildGraph(sheets: OrgSheet[], teams: Team[]) {
   const teamMap = new Map(teams.map((team) => [team.sheetId, team]));
+  const layouts = sheets
+    .map((sheet) => {
+      const team = teamMap.get(sheet.id);
+      return team ? resolveSheetLayout(sheet, team) : null;
+    })
+    .filter((layout): layout is SheetLayout => Boolean(layout));
+
   const nodes: Node[] = [];
   const edges: Edge[] = [];
-  const totalWidth = sheets.length * SHEET_WIDTH + Math.max(sheets.length - 1, 0) * SHEET_GAP;
-  const startX = (FLOW_WIDTH - totalWidth) / 2;
+  const totalWidth = layouts.reduce((sum, layout, index) => sum + layout.width + (index > 0 ? SHEET_GAP : 0), 0);
+  let cursorX = (FLOW_WIDTH - totalWidth) / 2;
 
-  sheets.forEach((sheet, index) => {
-    const team = teamMap.get(sheet.id);
-    if (!team) return;
-
-    const sheetX = startX + index * (SHEET_WIDTH + SHEET_GAP);
-    const isExecutive = sheet.id === 'sheet-executive';
-    const leadPerson: OrgMember & { avatar?: string } = isExecutive
-      ? {
-          id: 'executive-lead',
-          name: leader.name,
-          title: leader.title,
-          avatar: leader.avatar
-        }
-      : (team.people.find((person) => person.name === team.lead) ?? team.people[0]);
-    const memberPeople = team.people.filter((person) => person.name !== leadPerson.name);
-    const memberCount = 1 + memberPeople.length;
-    const sheetHeight = Math.max(
-      276,
-      SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + LEAD_MEMBER_GAP + memberPeople.length * MEMBER_HEIGHT + Math.max(memberPeople.length - 1, 0) * MEMBER_GAP + SHEET_PADDING_Y
-    );
-    const innerWidth = SHEET_WIDTH - SHEET_PADDING_X * 2;
-    const leadNodeId = `${sheet.id}-lead`;
+  layouts.forEach((layout, index) => {
+    const { sheet, team, width, height, mode, leadPerson, members } = layout;
+    const sheetX = cursorX;
+    cursorX += width + (index < layouts.length - 1 ? SHEET_GAP : 0);
+    const innerWidth = width - SHEET_PADDING_X * 2;
 
     nodes.push({
       id: sheet.id,
@@ -133,89 +186,116 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
       data: {
         name: sheet.name,
         description: sheet.description,
-        memberCount
+        memberCount: team.people.length
       },
       style: {
-        width: SHEET_WIDTH,
-        height: sheetHeight
+        width,
+        height
       },
       draggable: false,
       selectable: false
     });
 
-    nodes.push({
-      id: leadNodeId,
-      type: 'lead',
-      parentId: sheet.id,
-      extent: 'parent',
-      position: { x: SHEET_PADDING_X, y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
-      data: {
-        name: leadPerson.name,
-        title: leadPerson.title,
-        avatar: isExecutive ? leader.avatar : undefined
-      },
-      style: {
-        width: innerWidth,
-        height: LEAD_CARD_HEIGHT
-      },
-      draggable: false,
-      selectable: false
-    });
-
-    edges.push({
-      id: `${sheet.id}-lead`,
-      source: sheet.id,
-      target: leadNodeId,
-      type: 'smoothstep',
-      style: {
-        stroke: '#d1d5db',
-        strokeWidth: 1.5
-      }
-    });
-
-    memberPeople.forEach((person, memberIndex) => {
-      const memberNodeId = person.id;
+    if (mode === 'hierarchical' && leadPerson) {
+      const leadNodeId = `${sheet.id}-lead`;
       nodes.push({
-        id: memberNodeId,
-        type: 'member',
+        id: leadNodeId,
+        type: 'lead',
         parentId: sheet.id,
         extent: 'parent',
-        position: {
-          x: SHEET_PADDING_X,
-          y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + LEAD_MEMBER_GAP + memberIndex * (MEMBER_HEIGHT + MEMBER_GAP)
-        },
+        position: { x: SHEET_PADDING_X, y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
         data: {
-          name: person.name,
-          title: person.title
+          name: leadPerson.name,
+          title: leadPerson.title
         },
         style: {
           width: innerWidth,
-          height: MEMBER_HEIGHT
+          height: LEAD_CARD_HEIGHT
         },
         draggable: false,
         selectable: false
       });
 
       edges.push({
-        id: `${leadNodeId}-${memberNodeId}`,
-        source: leadNodeId,
-        target: memberNodeId,
+        id: `${sheet.id}-lead`,
+        source: sheet.id,
+        target: leadNodeId,
         type: 'smoothstep',
         style: {
           stroke: '#d1d5db',
           strokeWidth: 1.5
         }
       });
+
+      members.forEach((person, memberIndex) => {
+        const memberNodeId = person.id;
+        nodes.push({
+          id: memberNodeId,
+          type: 'member',
+          parentId: sheet.id,
+          extent: 'parent',
+          position: {
+            x: SHEET_PADDING_X,
+            y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + memberIndex * (HIER_MEMBER_HEIGHT + HIER_MEMBER_GAP)
+          },
+          data: {
+            name: person.name,
+            title: person.title
+          },
+          style: {
+            width: innerWidth,
+            height: HIER_MEMBER_HEIGHT
+          },
+          draggable: false,
+          selectable: false
+        });
+
+        edges.push({
+          id: `${leadNodeId}-${memberNodeId}`,
+          source: leadNodeId,
+          target: memberNodeId,
+          type: 'smoothstep',
+          style: {
+            stroke: '#d1d5db',
+            strokeWidth: 1.5
+          }
+        });
+      });
+      return;
+    }
+
+    members.forEach((person, memberIndex) => {
+      nodes.push({
+        id: person.id,
+        type: 'member',
+        parentId: sheet.id,
+        extent: 'parent',
+        position: {
+          x: SHEET_PADDING_X + memberIndex * (FLAT_MEMBER_WIDTH + FLAT_MEMBER_GAP),
+          y: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y
+        },
+        data: {
+          name: person.name,
+          title: person.title,
+          compact: true
+        },
+        style: {
+          width: FLAT_MEMBER_WIDTH,
+          height: FLAT_MEMBER_HEIGHT
+        },
+        draggable: false,
+        selectable: false
+      });
     });
   });
 
-  if (sheets.length > 1) {
-    const rootSheetId = sheets[0].id;
-    sheets.slice(1).forEach((sheet) => {
+  if (layouts.length > 1) {
+    const rootSheetId = layouts[0].sheet.id;
+    layouts.slice(1).forEach((layout) => {
       edges.push({
-        id: `${rootSheetId}-${sheet.id}`,
+        id: `${rootSheetId}-${layout.sheet.id}`,
         source: rootSheetId,
-        target: sheet.id,
+        target: layout.sheet.id,
         type: 'smoothstep',
         style: {
           stroke: '#d1d5db',
@@ -229,13 +309,12 @@ function buildGraph(leader: OrgLeader, sheets: OrgSheet[], teams: Team[]) {
 }
 
 type OrganizationFlowProps = {
-  leader: OrgLeader;
   sheets: OrgSheet[];
   teams: Team[];
 };
 
-export function OrganizationFlow({ leader, sheets, teams }: OrganizationFlowProps) {
-  const { nodes, edges } = React.useMemo(() => buildGraph(leader, sheets, teams), [leader, sheets, teams]);
+export function OrganizationFlow({ sheets, teams }: OrganizationFlowProps) {
+  const { nodes, edges } = React.useMemo(() => buildGraph(sheets, teams), [sheets, teams]);
 
   return (
     <div

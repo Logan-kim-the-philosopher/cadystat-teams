@@ -1,68 +1,59 @@
 # 조직도 데이터 스키마
 
-현재 `cody-stat` 조직도는 **시트(sheet) → 팀 리드(lead) → 멤버(member)** 구조로 렌더링합니다.
+현재 `cody-stat` 조직도는 **운영진 시트가 최상단**이고, 그 아래에 하위 시트들이 연결되는 구조입니다.
+각 시트 안에는 **팀장 → 팀원** 흐름이 기본이고, 팀장이 없으면 **수평형**으로 배치합니다.
 
-## 1) 한눈에 보는 구조
+## 1) 구조 개요
 
 ```mermaid
 flowchart TD
-  leader[OrgLeader\n대표이사 정보]
+  s0[OrgSheet\n운영진]
+  s1[OrgSheet\n경영지원팀]
+  s2[OrgSheet\n개발 시트]
+  s3[OrgSheet\n마케팅 시트]
 
-  s1[OrgSheet\n운영진]
-  s2[OrgSheet\n경영지원팀]
-  s3[OrgSheet\n개발 시트]
-  s4[OrgSheet\n마케팅 시트]
+  s0 --> s1
+  s0 --> s2
+  s0 --> s3
 
-  leader --> s1
-  s1 --> s2
-  s2 --> s3
-  s3 --> s4
-
-  subgraph sheet1[운영진 내부]
-    l1[Lead node\n홍길동 / 대표이사]
+  subgraph exec[운영진 내부]
+    l0[Lead\n홍길동 / 대표이사]
   end
 
-  subgraph sheet2[경영지원팀 내부]
-    l2[Lead node\n김민수 / 인사 담당]
+  subgraph ops[경영지원팀 내부]
+    l1[Lead\n김민수 / 인사 담당]
+    m11[Member]
+    m12[Member]
+  end
+
+  subgraph eng[개발 시트 내부]
+    l2[Lead\n박정우 / Backend Developer]
     m21[Member]
     m22[Member]
   end
 
-  subgraph sheet3[개발 시트 내부]
-    l3[Lead node\n박정우 / Backend Developer]
+  subgraph prod[마케팅 시트 내부]
+    l3[Lead\n정하늘 / 콘텐츠 마케터]
     m31[Member]
     m32[Member]
-  end
-
-  subgraph sheet4[마케팅 시트 내부]
-    l4[Lead node\n정하늘 / 콘텐츠 마케터]
-    m41[Member]
-    m42[Member]
   end
 ```
 
 ## 2) 타입 스키마
 
-### OrgLeader
-대표이사 카드용 기본 정보
-- `name`
-- `title`
-- `subtitle`
-- `avatar`
-
 ### OrgSheet
-조직도를 묶는 상위 카드
+상위 조직 카드
 - `id`
 - `name`
 - `description`
 - `teamSlugs`
 
 ### Team
-시트 안에 들어가는 팀 단위
+시트 내부 조직 단위
 - `slug`
 - `sheetId`
 - `name`
-- `lead`
+- `lead` (`string | null`)
 - `members`
 - `tickets`
 - `description`
@@ -71,37 +62,38 @@ flowchart TD
 - `people[]`
 
 ### OrgMember
-팀 안의 사람 노드
+멤버 노드
 - `id`
 - `name`
 - `title`
 
-## 3) 현재 렌더링 규칙
+### OrgLeader
+현재는 별도 루트 노드가 아니라, 운영진 시트 안의 리드 역할로만 사용 가능
+- `name`
+- `title`
+- `subtitle`
+- `avatar`
 
-- **시트 카드**는 팀 단위를 감싸는 컨테이너
-- **시트 내부 첫 노드**는 팀장/리드
-- **그 아래 노드**는 멤버
-- **사람 간 교차 연결은 없음**
-- **엣지는 시트끼리만 연결**
+## 3) 렌더링 규칙
 
-## 4) 현재 데이터 관계
+- **최상단은 운영진 시트**
+- **시트끼리만 엣지 연결**
+- 각 시트 내부는:
+  - `lead`가 있으면 **팀장 → 팀원** 수직 구조
+  - `lead`가 없으면 **팀원 수평 구조**
+- 팀장/리드가 있으면 그 아래로 멤버 엣지가 연결됨
+- 팀장이 없으면 멤버 간 엣지는 생략
 
-- `OrgLeader` → `sheet-executive` 안에 포함
-- `OrgSheet` → 1개 `Team`을 가리킴
-- `Team` → 여러 `OrgMember`
-- `Team.lead` → 팀의 대표 표시명
-- `Team.people[0]` → 보통 리드 노드
+## 4) 현재 목업 데이터
 
-## 5) 화면 매핑
+- `sheet-executive` = 운영진
+- `sheet-operations` = 경영지원팀
+- `sheet-engineering` = 개발 시트
+- `sheet-product` = 마케팅 시트
 
-- `OrganizationFlow` = 시각화 엔진
-- `orgSheets` = 상위 시트 카드 목록
-- `teams` = 시트 내부 구성 데이터
-- `orgLeader` = 최상단 대표이사 정보
+## 5) 해석 포인트
 
-## 6) 해석 팁
-
-- `members` 값은 **표시 숫자**
+- `members`는 표시 숫자
 - 실제 노드 수는 `people[]` 기준
-- `sheet-executive`는 대표이사를 포함하는 예외 시트
-- 나머지 시트는 팀장 + 팀원 구조
+- `lead`가 `null`이면 수평형 조직으로 취급
+- `lead`는 문자열 매칭으로 리드 노드를 찾음

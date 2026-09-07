@@ -258,19 +258,6 @@ function buildGraph(units: OrgUnit[]) {
           zIndex: 1
         });
 
-        const reportingNodeId = person.reportsToMemberId ? memberNodeIds.get(person.reportsToMemberId) : leadNodeId;
-        if (!reportingNodeId) return;
-
-        edges.push({
-          id: `${reportingNodeId}-${memberNodeId}`,
-          source: reportingNodeId,
-          target: memberNodeId,
-          type: 'smoothstep',
-          style: {
-            stroke: '#d1d5db',
-            strokeWidth: 1.5
-          }
-        });
       });
       return;
     }
@@ -356,9 +343,39 @@ function buildGraph(units: OrgUnit[]) {
     const leadNodeId = `${layout.sheet.id}-lead`;
     memberGraph.setNode(leadNodeId, { width: memberWidth, height: LEAD_CARD_HEIGHT });
     layout.members.forEach((person) => memberGraph.setNode(person.id, { width: memberWidth, height: HIER_MEMBER_HEIGHT }));
+
+    const childrenByManager = new Map<string, string[]>();
     layout.members.forEach((person) => {
-      memberGraph.setEdge(person.reportsToMemberId ?? leadNodeId, person.id);
+      const managerId = person.reportsToMemberId ? memberNodeIds.get(person.reportsToMemberId) : leadNodeId;
+      if (!managerId) return;
+      childrenByManager.set(managerId, [...(childrenByManager.get(managerId) ?? []), person.id]);
     });
+    childrenByManager.forEach((children, managerId) => {
+      if (children.length < 2) {
+        memberGraph.setEdge(managerId, children[0]);
+        edges.push({ id: `${managerId}-${children[0]}`, source: managerId, target: children[0], type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+        return;
+      }
+      const junctionId = `${managerId}-junction`;
+      memberGraph.setNode(junctionId, { width: 1, height: 1 });
+      memberGraph.setEdge(managerId, junctionId);
+      edges.push({ id: `${managerId}-${junctionId}`, source: managerId, target: junctionId, type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+      children.forEach((childId) => {
+        memberGraph.setEdge(junctionId, childId);
+        edges.push({ id: `${junctionId}-${childId}`, source: junctionId, target: childId, type: 'smoothstep', style: { stroke: '#d1d5db', strokeWidth: 1.5 } });
+      });
+      nodes.push({
+        id: junctionId,
+        type: 'member',
+        position: { x: 0, y: 0 },
+        data: { name: '', title: '', role: 'member' },
+        style: { width: 1, height: 1, opacity: 0, pointerEvents: 'none' },
+        draggable: false,
+        selectable: false,
+        zIndex: -1
+      });
+    });
+    nodes.forEach((node) => nodesById.set(node.id, node));
     dagre.layout(memberGraph);
 
     const memberGraphSize = memberGraph.graph();
@@ -375,7 +392,7 @@ function buildGraph(units: OrgUnit[]) {
       };
     }
 
-    const hierarchyNodeIds = [leadNodeId, ...layout.members.map((person) => person.id)];
+    const hierarchyNodeIds = memberGraph.nodes();
     hierarchyNodeIds.forEach((nodeId) => {
       const node = nodesById.get(nodeId);
       const position = memberGraph.node(nodeId);

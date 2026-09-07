@@ -12,8 +12,8 @@ const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
 <SiteLayout title="조직도 · cody-stat" description="팀 구조와 담당 맵">
   <SectionTitle
     eyebrow="조직도"
-    title="시트 안에 팀, 팀 아래 멤버"
-    description="코디세이 플랫폼의 조직 구조를 노드와 엣지로 보여줍니다."
+    title="대표이사 아래 팀, 팀 아래 멤버"
+    description="겹겹이 쌓인 배경 없이, 평면형 카드 조직도로 보여줍니다."
   >
     <Badge variant="outline">{orgSheets.length} sheets · {teams.length} teams · {totalMembers} members</Badge>
   </SectionTitle>
@@ -24,7 +24,7 @@ const totalMembers = teams.reduce((sum, team) => sum + team.members, 0);
       <CardDescription>대표이사 → 팀 → 팀원 순서의 계층 구조</CardDescription>
     </CardHeader>
     <CardContent className="p-0">
-      <OrganizationFlow client:only="react" leader={orgLeader} sheets={orgSheets} teams={teams} />
+      <OrganizationFlow client:only="react" leader={orgLeader} teams={teams} />
     </CardContent>
   </Card>
 </SiteLayout>

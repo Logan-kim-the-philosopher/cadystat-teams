@@ -119,7 +119,8 @@ export const teams: Team[] = [
     tone: 'blue',
     people: [
       { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터' },
-      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터' }
+      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터' },
+      { id: 'product-lee', name: '이서윤', title: '브랜드 마케터' }
     ]
   },
   {
@@ -134,7 +135,8 @@ export const teams: Team[] = [
     tone: 'green',
     people: [
       { id: 'engineering-bak', name: '박정우', title: 'Backend Developer' },
-      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer' }
+      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer' },
+      { id: 'engineering-ji', name: '이지훈', title: 'Platform Engineer' }
     ]
   },
   {
@@ -149,7 +151,8 @@ export const teams: Team[] = [
     tone: 'amber',
     people: [
       { id: 'operations-kim', name: '김민수', title: '인사 담당' },
-      { id: 'operations-lee', name: '이영희', title: '재무 담당' }
+      { id: 'operations-lee', name: '이영희', title: '재무 담당' },
+      { id: 'operations-jung', name: '정다은', title: '총무 담당' }
     ]
   }
 ];

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { User } from 'lucide-react';
+import { Bug, Lightbulb, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -7,8 +7,6 @@ import { Textarea } from '../ui/textarea';
 import { TicketItem } from './ticket-item';
 import { TeamTicketCard } from './team-ticket-card';
 import { ticketStatusVariant, type TeamRecord, type TicketDetailRecord, type TicketRecord } from './ticket-types';
-
-const ticketTypeVariant = (type: string) => type === '버그' ? 'red' as const : 'blue' as const;
 
 interface TicketListProps {
   tickets: TicketRecord[];
@@ -152,7 +150,7 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
                 <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-border pb-4">
                   <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">상태</span><Badge variant={ticketStatusVariant(selectedTicket.status || '신규')}>{selectedTicket.status || '신규'}</Badge></div>
                   <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">담당 팀</span><Badge variant="outline">{assignedTeam}</Badge></div>
-                  <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">티켓 유형</span><Badge variant={ticketTypeVariant(selectedTicket.type)}>{selectedTicket.type || '미지정'}</Badge></div>
+                  <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">티켓 유형</span><span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">{selectedTicket.type === '버그' ? <Bug className="h-4 w-4" /> : <Lightbulb className="h-4 w-4" />}{selectedTicket.type || '미지정'}</span></div>
                 </div>
                 <section className="mt-6 min-h-56"><p className="whitespace-pre-wrap leading-7 text-foreground">{detail?.description ?? '설명이 없습니다.'}</p></section>
                 {selectedTicket.status === '배정' && <Button type="button" className="mt-6 h-11 w-full" onClick={async () => { const response = await fetch(`/api/tickets?id=${encodeURIComponent(selectedTicket.id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: '완료' }) }); if (response.ok) { setDisplayTickets((current) => current.map((ticket) => ticket.id === selectedTicket.id ? { ...ticket, status: '완료' } : ticket)); setSelectedTicket((current) => current ? { ...current, status: '완료' } : current); } }}>완료 처리</Button>}

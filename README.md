@@ -1,90 +1,105 @@
 # Codystat-Teams
 
-중앙조직 운영 포털 기획 저장소입니다.
+중앙 조직 운영 포털입니다. 티켓 접수·배정·상태 관리, 팀 조직도, 회의록과 댓글을 한 곳에서 관리합니다.
 
-## 목표
-- 오류/기능 제보를 하나의 창구로 받습니다.
-- 각 팀이 티켓을 인수해서 처리합니다.
-- 팀 조직도를 시각화합니다.
-- 전체 회의록을 남기고 댓글을 달 수 있게 합니다.
+## 기술 스택
 
-## 방향
-- **Plane**: 티켓, 상태, 이관, 권한, 회의록 원본
-- **Astro**: 포털 라우팅/레이아웃
-- **React islands**: 상호작용이 필요한 부분
-- **shadcn UI**: 카드/배지/탭/입력 등 핵심 UI 컴포넌트
-- **Sanity**: 현재는 필수 아님. 필요할 때 보조 문서 저장소로만 검토
+- **Astro**: 페이지 라우팅, 서버 렌더링, 공통 레이아웃
+- **React islands**: 티켓 보드, 조직도 등 상호작용 UI
+- **Tailwind CSS + shadcn 스타일 컴포넌트**: 일관된 UI
+- **Supabase/Postgres**: 티켓, 조직, 회의록 데이터 저장
+- **Plane API**: 조직 및 프로젝트 연동 API
 
-## 핵심 요구사항
-1. 팀은 2~3개 이상 존재해야 함
-2. 팀 생성/수정 가능해야 함
-3. 조직도를 실시간에 가깝게 표시해야 함
-4. 오류/기능 제보는 하나의 접수함으로 받아야 함
-5. 각 팀이 티켓을 가져가서 처리해야 함
-6. 처리 상태와 이관 기록을 보여줘야 함
-7. 회의록은 전체 회의용으로만 저장해야 함
-8. 회의록에 댓글이 가능해야 함
+## 실행
 
-## 최소 데이터 모델
+```bash
+npm install
+npm run dev
+npm run build
+```
 
-### Team
-- id
-- name
-- slug
-- parentTeamId
-- leadUserId
-- members
+환경 변수는 `.env.example`을 참고합니다. 실제 값은 `.env` 또는 Bitwarden Secrets Manager에서 런타임에 주입합니다.
 
-### Ticket
-- id
-- title
-- type (`bug`, `feature`, `request`)
-- status
-- ownerTeamId
-- assigneeUserId
-- priority
-- history
+## 프로젝트 구조
 
-### MeetingNote
-- id
-- title
-- date
-- attendees
-- agenda
-- decisions
-- linkedTicketIds
-- comments
+```text
+src/
+├── components/
+│   ├── app/              # 도메인별 화면 및 React island
+│   │   ├── ticket-browser.tsx
+│   │   ├── ticket-list.tsx
+│   │   ├── ticket-item.tsx
+│   │   ├── ticket-create-modal.tsx
+│   │   ├── ticket-filters.tsx
+│   │   ├── team-ticket-card.tsx
+│   │   └── organization-flow.tsx
+│   └── ui/               # 공통 shadcn 스타일 컴포넌트
+├── layouts/
+│   └── SiteLayout.astro  # 전체 사이트 레이아웃
+├── lib/
+│   ├── site-data.ts      # 화면용 데이터 타입 및 변환
+│   ├── server-meetings.ts
+│   └── renderers/        # Markdown 렌더링
+├── pages/
+│   ├── index.astro       # 홈 대시보드
+│   ├── organization.astro
+│   ├── organization/[slug].astro
+│   ├── meetings/index.astro
+│   ├── meetings/[slug].astro
+│   ├── tickets/index.astro
+│   └── api/              # 서버 API 엔드포인트
+└── styles/global.css
 
-## 화면
-- 홈 대시보드
-- 조직도
-- 티켓 접수함
-- 티켓 상세
-- 전체 회의록 목록
-- 회의록 상세
+supabase/migrations/      # 데이터베이스 마이그레이션
+docs/                     # 설계 및 데이터 모델 문서
+public/                   # 정적 이미지 및 아바타
+```
 
-## 운영 흐름
-1. 폼/메일/수기 입력으로 제보 접수
-2. 단일 큐에 적재
-3. 팀이 티켓을 가져감
-4. 상태/담당자/팀 변경
-5. 회의에서 논의
-6. 회의록에 결정사항 기록
-7. 댓글과 후속 처리 반영
+## 주요 기능
 
-## 우선순위
-1. Plane 워크스페이스/권한 정리
-2. 단일 티켓 접수 흐름
-3. 회의록 + 댓글 흐름
-4. 조직도 화면
-5. Astro 포털 연결
-6. 외부 폼 자동 티켓 생성
+### 티켓
+
+- 신규 티켓 접수: 제목, 설명, 유형, 담당 팀
+- 목록/팀별 현황/칸반보드 보기
+- 카드 드래그 앤 드롭으로 상태 변경
+- 신규 상태로 이동하면 담당 팀 자동 해제
+- 담당 팀이 없는 티켓은 배정 상태로 이동 불가
+- 티켓 편집·삭제 메뉴
+- 상태별 배지와 팀/유형 정보 표시
+- 티켓 클릭 시 상세 모달에서 본문, 이력, 댓글 확인
+
+### 조직도
+
+- 전체 조직 및 팀 상세 화면
+- 팀/구성원 표시
+- 상위 팀과 리더 관계 시각화
+- 팀 및 구성원 관리 API
+
+### 회의록
+
+- 회의록 목록 및 상세 화면
+- Markdown 기반 본문 렌더링
+- 관련 티켓 연결
+- 댓글 작성 및 조회
+
+## API
+
+- `GET/POST/PATCH/DELETE /api/tickets`
+- `GET/POST /api/ticket-comments`
+- `GET/POST /api/meeting-comments`
+- `GET/POST /api/meetings`
+- `GET /api/plane/organization`
+- `GET /api/plane/projects`
+- `GET /api/plane/teams`
+- `GET/POST /api/organization/members`
+
+티켓 상태는 `신규`, `배정`, `완료`를 사용하며, 데이터베이스의 유형·상태·팀 ID와 연결됩니다.
 
 ## 문서
+
 - [화면 설계](docs/screen-design.md)
-- [데이터 모델 상세화](docs/data-model.md)
-- [조직도 데이터 스키마](docs/organization-schema.md)
-- [Plane 기준 기능 분해](docs/plane-feature-split.md)
-- [초기 구현 순서](docs/implementation-roadmap.md)
+- [데이터 모델](docs/data-model.md)
 - [프로젝트 구조](docs/project-structure.md)
-- [shadcn 전환 계획](docs/shadcn-rewrite-plan.md)
+- [조직도 데이터 스키마](docs/organization-schema.md)
+- [Plane 기능 분해](docs/plane-feature-split.md)
+- [구현 로드맵](docs/implementation-roadmap.md)

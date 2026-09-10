@@ -3,3 +3,10 @@ dist/
 .astro/
 .env
 .env.*
+!.env.example
+
+# Local Supabase CLI state
+supabase/.temp/
+
+# Pi local state
+.pi/

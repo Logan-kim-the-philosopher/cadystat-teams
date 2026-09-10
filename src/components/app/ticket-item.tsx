@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Bug, Flag, Lightbulb, MoreHorizontal, Pencil, Trash2, Users } from 'lucide-react';
-import type { TicketRecord } from './ticket-types';
+import { ticketStatusVariant, type TicketRecord } from './ticket-types';
 
 interface TicketItemProps {
   ticket: TicketRecord;
@@ -70,7 +70,7 @@ export function TicketItem({ ticket, draggable = false, onSelect, teams = [], de
         <CardContent className="flex h-full flex-col justify-between p-4">
           <div className="flex items-center gap-2 pr-8">
             <span className="text-sm font-medium text-muted-foreground">#{ticket.id.replace(/^#/, '')}</span>
-            <Badge variant={ticket.status === '완료' ? 'green' : ticket.status === '배정' || ticket.status === '담당 배정' || ticket.status === '진행 중' ? 'amber' : 'red'}>{ticket.status || '신규'}</Badge>
+            <Badge variant={ticketStatusVariant(ticket.status || '신규')}>{ticket.status || '신규'}</Badge>
           </div>
           <h3 className="line-clamp-2 pr-2 text-base font-semibold leading-6 tracking-tight text-foreground">{ticket.title}</h3>
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">

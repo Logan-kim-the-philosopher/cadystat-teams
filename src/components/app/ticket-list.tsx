@@ -6,13 +6,7 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import { TicketItem } from './ticket-item';
 import { TeamTicketCard } from './team-ticket-card';
-import type { TeamRecord, TicketDetailRecord, TicketRecord } from './ticket-types';
-
-const statusVariant = (status: string) => {
-  if (status === '완료') return 'green' as const;
-  if (status === '배정') return 'amber' as const;
-  return 'blue' as const;
-};
+import { ticketStatusVariant, type TeamRecord, type TicketDetailRecord, type TicketRecord } from './ticket-types';
 
 const ticketTypeVariant = (type: string) => type === '버그' ? 'red' as const : 'blue' as const;
 
@@ -156,7 +150,7 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
             return (
               <>
                 <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-border pb-4">
-                  <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">상태</span><Badge variant={statusVariant(selectedTicket.status)}>{selectedTicket.status}</Badge></div>
+                  <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">상태</span><Badge variant={ticketStatusVariant(selectedTicket.status || '신규')}>{selectedTicket.status || '신규'}</Badge></div>
                   <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">담당 팀</span><Badge variant="outline">{assignedTeam}</Badge></div>
                   <div className="flex items-center gap-3"><span className="text-sm text-muted-foreground">티켓 유형</span><Badge variant={ticketTypeVariant(selectedTicket.type)}>{selectedTicket.type || '미지정'}</Badge></div>
                 </div>

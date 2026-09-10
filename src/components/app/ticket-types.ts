@@ -27,3 +27,11 @@ export type TicketRecord = {
   priority?: string;
   createdAt: string;
 };
+
+export type TicketStatusVariant = 'green' | 'amber' | 'red';
+
+export function ticketStatusVariant(status: string): TicketStatusVariant {
+  if (status === '완료') return 'green';
+  if (status === '배정' || status === '담당 배정' || status === '진행 중') return 'amber';
+  return 'red';
+}

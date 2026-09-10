@@ -1,6 +1,8 @@
 # 서비스 이식 가이드
 
-다른 개발자가 이 프로젝트를 자신의 서버와 Supabase 프로젝트로 옮기는 절차입니다.
+다른 개발자가 이 프로젝트를 자신의 서버와 **개인 Supabase 프로젝트**로 옮기는 절차입니다.
+
+> 현재 애플리케이션은 Supabase REST API와 Supabase RPC를 사용합니다. 따라서 일반 PostgreSQL만으로는 바로 실행되지 않으며, Supabase를 사용하지 않으려면 별도의 DB adapter 작업이 필요합니다.
 
 ## 요구 사항
 
@@ -43,6 +45,14 @@ supabase migration list
 
 마이그레이션에는 조직, 구성원, 티켓, 티켓 이력, 회의록, 댓글, 관계 테이블과 조직 저장 RPC가 포함됩니다.
 
+빈 DB에서 확인할 예시 데이터는 `supabase/seed.example.sql`에 있습니다.
+
+```bash
+psql "$DATABASE_URL" -f supabase/seed.example.sql
+```
+
+seed에는 운영진·개발팀·기획팀, 예시 구성원, 예시 티켓, 예시 회의록이 포함됩니다. 실제 서비스 데이터는 포함하지 않으므로 필요에 맞게 수정해서 사용하세요.
+
 기존 데이터를 이식할 때는 먼저 테이블 구조를 확인한 뒤 `teams`, `members`, `ticket_types`, `ticket_statuses` 순서로 넣고, 티켓과 회의록을 연결합니다.
 
 ## 3. 로컬 실행
@@ -75,7 +85,19 @@ node ./dist/server/entry.mjs
 
 실제 배포 전에 `npm run build`, 조직도 조회, 티켓 생성·상태 변경, 회의록 조회를 확인합니다.
 
-## 5. 기능별 이식 포인트
+## 5. 데이터 구조 요약
+
+| 영역 | 주요 테이블 | 설명 |
+|---|---|---|
+| 조직 | `teams`, `members` | 상위 팀, 팀장, 구성원 관계 |
+| 티켓 | `tickets`, `ticket_types`, `ticket_statuses` | 접수·배정·상태 관리 |
+| 이력/댓글 | `ticket_history`, `ticket_comments` | 티켓 변경 추적과 댓글 |
+| 회의록 | `meeting_notes`, `meeting_comments` | Markdown 회의록과 댓글 |
+| 연결 | `meeting_note_tickets` | 회의록과 티켓의 다대다 관계 |
+
+자세한 컬럼과 관계는 [`organization-schema.md`](organization-schema.md), [`data-model.md`](data-model.md), 그리고 실제 마이그레이션 파일을 기준으로 확인합니다.
+
+## 6. 기능별 이식 포인트
 
 ### 조직도
 `src/pages/api/organization/index.ts`가 `teams`와 `members`를 조회·수정합니다. 조직 저장 RPC는 `supabase/migrations/20250910010000_save_organization_team_rpc.sql` 및 최신 보정 마이그레이션에서 정의됩니다.
@@ -86,7 +108,7 @@ node ./dist/server/entry.mjs
 ### 회의록
 회의록 본문은 Markdown 문자열로 저장하고, 댓글과 관련 티켓은 별도 관계 테이블을 사용합니다.
 
-## 6. 운영 전 점검
+## 7. 운영 전 점검
 
 - service-role 키가 클라이언트 코드나 로그에 노출되지 않는지 확인
 - Supabase 백업과 복구 절차 마련

@@ -99,3 +99,4 @@ public/                   # 정적 이미지 및 아바타
 - [조직도 데이터 스키마](docs/organization-schema.md)
 - [시스템 아키텍처](docs/architecture.md)
 - [서비스 이식 가이드](docs/migration-guide.md)
+- [예시 seed 데이터](supabase/seed.example.sql)

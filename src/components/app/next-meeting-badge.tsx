@@ -4,7 +4,7 @@ import { Calendar } from '../ui/calendar';
 
 function formatDate(value: string | null) {
   if (!value) return '다음 회의 일정 등록';
-  return `다음 회의: ${new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value))}`;
+  return `다음 회의: ${new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', hour: 'numeric' }).format(new Date(value))}`;
 }
 
 function toLocalInput(value: string | null) {

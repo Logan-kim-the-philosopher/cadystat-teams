@@ -20,6 +20,20 @@ async function fetchWithRetry(url: string, init: RequestInit, attempts = 3) {
   throw lastError instanceof Error ? lastError : new Error('Supabase request failed');
 }
 
+export async function getNextMeeting() {
+  const base = (env('CODY_STAT_SUPABASE_URL') ?? '').replace(/\/rest\/v1\/?$/, '');
+  const key = env('CODY_STAT_SUPABASE_SERVICE_ROLE_KEY');
+  if (!base || !key) return null;
+  try {
+    const response = await fetchWithRetry(`${base}/rest/v1/meeting_notes?select=next_meeting_at&status=eq.published&order=meeting_date.desc&limit=1`, { headers: { apikey: key, Authorization: `Bearer ${key}` } }, 1);
+    const rows = await response.json();
+    return rows[0]?.next_meeting_at ?? null;
+  } catch (error) {
+    console.error('[meetings] failed to load next meeting:', error);
+    return null;
+  }
+}
+
 export async function getMeetingNotes() {
   const base = (env('CODY_STAT_SUPABASE_URL') ?? '').replace(/\/rest\/v1\/?$/, '');
   const key = env('CODY_STAT_SUPABASE_SERVICE_ROLE_KEY');

@@ -87,8 +87,7 @@ public/                   # 정적 이미지 및 아바타
 - `GET/POST /api/ticket-comments`
 - `GET/POST /api/meeting-comments`
 - `GET/POST /api/meetings`
-- `GET /api/organization`
-- `GET/POST /api/organization/members`
+- `GET/POST/PATCH/DELETE /api/organization`
 
 티켓 상태는 `신규`, `배정`, `완료`를 사용하며, 데이터베이스의 유형·상태·팀 ID와 연결됩니다.
 
@@ -98,3 +97,5 @@ public/                   # 정적 이미지 및 아바타
 - [데이터 모델](docs/data-model.md)
 - [프로젝트 구조](docs/project-structure.md)
 - [조직도 데이터 스키마](docs/organization-schema.md)
+- [시스템 아키텍처](docs/architecture.md)
+- [서비스 이식 가이드](docs/migration-guide.md)

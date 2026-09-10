@@ -1,18 +1,16 @@
 # 프로젝트 구조
 
 ## 목표
-이 프로젝트는 Plane 기반 중앙조직 운영 포털을 만들기 위한 기획 저장소입니다.
-초기에는 문서 중심으로 유지하고, 이후 Astro 구현으로 확장합니다.
+Codystat-Teams는 Astro와 Supabase로 조직, 티켓, 회의록을 관리하는 중앙 운영 포털입니다.
 
-## 권장 디렉토리 구조
+## 디렉토리 구조
 ```text
 Codystat-Teams/
 ├─ README.md
 ├─ docs/
 │  ├─ screen-design.md
 │  ├─ data-model.md
-│  ├─ plane-feature-split.md
-│  ├─ implementation-roadmap.md
+│  ├─ organization-schema.md
 │  └─ project-structure.md
 ├─ src/
 │  ├─ components/
@@ -21,51 +19,31 @@ Codystat-Teams/
 │  ├─ lib/
 │  └─ styles/
 ├─ public/
-└─ package.json
+└─ supabase/
+   ├─ migrations/
+   └─ config.toml
 ```
 
-## 각 폴더 역할
+## 폴더 역할
 
 ### docs/
-- 서비스 기획
-- 화면 설계
-- 데이터 모델
-- 구현 순서
-- 기능 분해
+현재 서비스의 화면, 데이터 모델, 조직 스키마를 설명합니다.
 
 ### src/
-Astro 실제 구현 코드가 들어갈 자리입니다.
+Astro 페이지와 React 섬, API 라우트가 들어 있습니다.
 
-#### components/
-- 조직도 카드
-- 티켓 카드
-- 회의록 카드
-- 공통 UI
-
-#### layouts/
-- 전체 레이아웃
-- 포털 공통 틀
-
-#### pages/
-- 홈
-- 조직도
-- 티켓
-- 회의록
-
-#### lib/
-- Plane 연동
-- 데이터 변환
-- 유틸 함수
-
-#### styles/
-- 전역 스타일
-- 디자인 토큰
+- `components/`: 조직도, 티켓, 회의록 및 공통 UI
+- `layouts/`: 사이트 공통 레이아웃
+- `pages/`: 화면과 서버 API 엔드포인트
+- `lib/`: 타입, 정적 데이터, 공통 유틸리티
+- `styles/`: 전역 스타일과 디자인 토큰
 
 ### public/
-- 이미지
-- 아이콘
-- 정적 자원
+아바타, 이미지 등 정적 자원을 관리합니다.
 
-## 초기 단계 운영
-처음에는 `docs/`만 유지해도 충분합니다.
-실제 개발을 시작할 때 `src/`를 추가합니다.
+### supabase/
+Supabase 데이터베이스 마이그레이션과 로컬 설정을 관리합니다.
+
+## 데이터 원본
+
+조직, 팀, 구성원, 티켓, 회의록은 모두 Supabase를 단일 원본으로 사용합니다. 외부 업무 관리 서비스 연동은 사용하지 않습니다.

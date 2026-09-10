@@ -98,4 +98,3 @@ public/                   # 정적 이미지 및 아바타
 - [데이터 모델](docs/data-model.md)
 - [프로젝트 구조](docs/project-structure.md)
 - [조직도 데이터 스키마](docs/organization-schema.md)
-- [구현 로드맵](docs/implementation-roadmap.md)

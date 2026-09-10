@@ -33,7 +33,9 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
     setLocalDetails(details);
     setAssignments(Object.fromEntries(tickets.filter((ticket) => ticket.status !== '신규' && ticket.teamSlug).map((ticket) => [ticket.id, ticket.teamSlug])));
   }, [tickets]);
-  const incomingTickets = displayTickets.filter((ticket) => ticket.status === '신규' && !assignments[ticket.id]);
+  const incomingTickets = displayTickets
+    .filter((ticket) => ticket.status === '신규' && !assignments[ticket.id])
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime());
 
   async function returnToIncoming(event: React.DragEvent<HTMLDivElement>) {
     const ticketId = event.dataTransfer.getData('ticket-id') || draggingTicketId;
@@ -43,7 +45,7 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
     setDraggingTicketId(null);
     const response = await fetch(`/api/tickets?id=${encodeURIComponent(ticketId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team_id: null, status: '신규' }) });
     if (!response.ok) window.location.reload();
-    else setDisplayTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, teamSlug: '', status: '신규' } : ticket));
+    else setDisplayTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, teamSlug: '', status: '신규', updatedAt: new Date().toISOString() } : ticket));
   }
 
   async function assignTicket(teamSlug: string, event: React.DragEvent<HTMLDivElement>) {
@@ -76,7 +78,7 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
     const clearAssignment = status === '신규';
     const response = await fetch(`/api/tickets?id=${encodeURIComponent(ticketId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(clearAssignment ? { status, team_id: null } : { status }) });
     if (response.ok) {
-      setDisplayTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, status, ...(clearAssignment ? { team: '', teamSlug: '' } : {}) } : ticket));
+      setDisplayTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, status, ...(clearAssignment ? { team: '', teamSlug: '', updatedAt: new Date().toISOString() } : {}) } : ticket));
       if (clearAssignment) setAssignments((current) => { const next = { ...current }; delete next[ticketId]; return next; });
     }
   }

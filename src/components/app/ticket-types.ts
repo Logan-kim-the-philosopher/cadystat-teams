@@ -26,6 +26,7 @@ export type TicketRecord = {
   type: string;
   priority?: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 export type TicketStatusVariant = 'green' | 'amber' | 'red';

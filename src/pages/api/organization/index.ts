@@ -72,6 +72,10 @@ export const POST: APIRoute = async ({ request }) => {
       const key = env('CODY_STAT_SUPABASE_SERVICE_ROLE_KEY');
       if (!url || !key) throw new Error('Supabase 설정 누락');
       const headers = { apikey: key!, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+      const rpc = await fetch(`${url}/rest/v1/rpc/create_organization_team`, { method: 'POST', headers, body: JSON.stringify({ p_name: body.name, p_parent_team_id: body.parentTeamId ?? '', p_lead_name: body.leadName, p_lead_title: body.leadTitle, p_lead_gender: body.leadGender }) });
+      if (!rpc.ok) return Response.json({ error: await rpc.text() }, { status: rpc.status === 409 ? 409 : 400 });
+      organizationCache = null;
+      return Response.json(await rpc.json(), { status: 201 });
       const duplicateResponse = await fetch(`${url}/rest/v1/teams?name=eq.${encodeURIComponent(body.name.trim())}&select=id`, { headers });
       if (!duplicateResponse.ok) return Response.json({ error: '팀 이름 중복 여부를 확인하지 못했습니다.' }, { status: 502 });
       if ((await duplicateResponse.json()).length > 0) return Response.json({ error: '이미 같은 이름의 팀이 있습니다.' }, { status: 409 });

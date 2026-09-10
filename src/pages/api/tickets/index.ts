@@ -76,7 +76,7 @@ export const GET: APIRoute = async () => {
       const team = teamById.get(ticket.team_id);
       const ticketComments = comments.filter((x) => x.ticket_id === ticket.id);
       const detail = { id: ticket.ticket_number, title: ticket.title, status: statusById.get(ticket.status_id) ?? '신규', type: typeById.get(ticket.type_id) ?? '', ownerTeam: team?.name ?? '', assignee: memberById.get(ticket.assignee_id) ?? '미배정', description: ticket.description, history: history.filter((x) => x.ticket_id === ticket.id).map((x) => x.event), comments: ticketComments.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((x) => ({ author: x.author ?? '운영자', body: x.body, createdAt: x.created_at })), linkedMeetings: [] };
-      return { id: ticket.ticket_number, title: ticket.title, team: team?.name ?? '', teamSlug: team?.id ?? '', status: detail.status, type: detail.type, createdAt: ticket.created_at.slice(0, 10), detail };
+      return { id: ticket.ticket_number, title: ticket.title, team: team?.name ?? '', teamSlug: team?.id ?? '', status: detail.status, type: detail.type, createdAt: ticket.created_at.slice(0, 10), updatedAt: ticket.updated_at ?? ticket.created_at, detail };
     });
     const teamsResult = teams.map((team) => ({ id: team.id, name: team.name, slug: team.id }));
     return Response.json({ tickets: result, teams: teamsResult });

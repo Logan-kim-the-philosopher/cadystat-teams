@@ -507,7 +507,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const response = await fetch('/api/organization', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(form)) });
-    if (!response.ok) { window.alert('팀 생성에 실패했습니다.'); return; }
+    if (!response.ok) { const detail = await response.json().catch(() => ({})); window.alert(`팀 생성에 실패했습니다.\n${detail.error ?? '알 수 없는 오류'}`); return; }
     setIsTeamDialogOpen(false);
     setPlaneUnits(null);
     setPlaneUnits(null); setOrganizationRefresh((value) => value + 1);

@@ -2,6 +2,7 @@ export type OrgMember = {
   id: string;
   name: string;
   title: string;
+  gender: 'male' | 'female';
   orgUnitId: string;
   reportsToMemberId: string | null;
 };
@@ -33,7 +34,7 @@ export type Ticket = {
   title: string;
   team: string;
   teamSlug: string;
-  status: '담당 배정' | '진행 중' | '보류';
+  status: '신규' | '진행 중' | '완료';
   priority: '긴급' | '높음' | '보통';
   type: '버그' | '기능 요청';
   reporter: string;
@@ -44,7 +45,7 @@ export type Ticket = {
 export type TicketDetail = {
   id: string;
   title: string;
-  status: '담당 배정' | '진행 중' | '보류';
+  status: '신규' | '진행 중' | '완료';
   priority: '긴급' | '높음' | '보통';
   type: '버그' | '기능 요청';
   ownerTeam: string;
@@ -60,13 +61,10 @@ export type Meeting = {
   slug: string;
   date: string;
   title: string;
-  decisions: number;
+  coverImage: string;
   comments: number;
-  attendees: string[];
-  agenda: string[];
-  decisionsList: string[];
-  actionItems: string[];
-  linkedTickets: string[];
+  body: string;
+  linkedTicketIds: string[];
 };
 
 export const stats = [
@@ -86,33 +84,33 @@ export const orgUnits: OrgUnit[] = [
   {
     id: 'org-executive', slug: 'executive', name: '운영진', description: '대표이사와 회사 운영을 담당합니다.', parentId: null, leadMemberId: 'executive-hong', members: 1, tickets: 0,
     responsibilities: ['전략 수립', '의사결정', '조직 운영'], tone: 'amber',
-    people: [{ id: 'executive-hong', name: '홍길동', title: '대표이사', orgUnitId: 'org-executive', reportsToMemberId: null }]
+    people: [{ id: 'executive-hong', name: '홍길동', title: '대표이사', gender: 'male', orgUnitId: 'org-executive', reportsToMemberId: null }]
   },
   {
     id: 'org-product', slug: 'product', name: '마케팅팀', description: '마케팅 및 홍보를 담당합니다.', parentId: 'org-executive', leadMemberId: 'product-jeong', members: 3, tickets: 5,
     responsibilities: ['브랜드 캠페인', '콘텐츠 제작', '홍보 채널 운영'], tone: 'blue',
     people: [
-      { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터', orgUnitId: 'org-product', reportsToMemberId: null },
-      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' },
-      { id: 'product-lee', name: '이서윤', title: '브랜드 마케터', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' }
+      { id: 'product-jeong', name: '정하늘', title: '콘텐츠 마케터', gender: 'female', orgUnitId: 'org-product', reportsToMemberId: null },
+      { id: 'product-yoon', name: '윤서연', title: 'SNS 마케터', gender: 'female', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' },
+      { id: 'product-lee', name: '이서윤', title: '브랜드 마케터', gender: 'female', orgUnitId: 'org-product', reportsToMemberId: 'product-jeong' }
     ]
   },
   {
     id: 'org-engineering', slug: 'engineering', name: '개발팀', description: '제품 개발 및 운영을 담당합니다.', parentId: 'org-executive', leadMemberId: 'engineering-bak', members: 3, tickets: 4,
     responsibilities: ['제품 개발', '시스템 운영', '품질 검증'], tone: 'green',
     people: [
-      { id: 'engineering-bak', name: '박정우', title: 'Backend Developer', orgUnitId: 'org-engineering', reportsToMemberId: null },
-      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' },
-      { id: 'engineering-ji', name: '이지훈', title: 'Platform Engineer', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' }
+      { id: 'engineering-bak', name: '박정우', title: 'Backend Developer', gender: 'male', orgUnitId: 'org-engineering', reportsToMemberId: null },
+      { id: 'engineering-choi', name: '최수진', title: 'Frontend Developer', gender: 'female', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' },
+      { id: 'engineering-ji', name: '이지훈', title: 'Platform Engineer', gender: 'male', orgUnitId: 'org-engineering', reportsToMemberId: 'engineering-bak' }
     ]
   },
   {
     id: 'org-operations', slug: 'operations', name: '경영지원팀', description: '인사, 총무, 재무를 담당합니다.', parentId: 'org-executive', leadMemberId: 'operations-kim', members: 3, tickets: 3,
     responsibilities: ['인사 관리', '총무 지원', '재무 정리'], tone: 'amber',
     people: [
-      { id: 'operations-kim', name: '김민수', title: '인사 담당', orgUnitId: 'org-operations', reportsToMemberId: null },
-      { id: 'operations-lee', name: '이영희', title: '재무 담당', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' },
-      { id: 'operations-jung', name: '정다은', title: '총무 담당', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' }
+      { id: 'operations-kim', name: '김민수', title: '인사 담당', gender: 'male', orgUnitId: 'org-operations', reportsToMemberId: null },
+      { id: 'operations-lee', name: '이영희', title: '재무 담당', gender: 'female', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' },
+      { id: 'operations-jung', name: '정다은', title: '총무 담당', gender: 'female', orgUnitId: 'org-operations', reportsToMemberId: 'operations-kim' }
     ]
   }
 ];
@@ -125,7 +123,7 @@ export const tickets: Ticket[] = [
     title: '모바일에서 로그인 폼 검증이 동작하지 않음',
     team: '개발팀',
     teamSlug: 'engineering',
-    status: '담당 배정',
+    status: '신규',
     priority: '높음',
     type: '버그',
     reporter: '고객지원',
@@ -149,13 +147,26 @@ export const tickets: Ticket[] = [
     title: '입력 접수 중복 생성 버그',
     team: '경영지원팀',
     teamSlug: 'operations',
-    status: '보류',
+    status: '진행 중',
     priority: '긴급',
     type: '버그',
     reporter: '웹 폼',
     createdAt: '2025-09-03',
     summary: '네트워크가 느릴 때 폼 제출이 중복 티켓으로 생성될 수 있습니다.'
-  }
+  },
+  {
+    id: 'T-121', title: '대시보드 알림 설정 개선', team: '개발팀', teamSlug: 'engineering', status: '신규', priority: '보통', type: '기능 요청', reporter: '운영팀', createdAt: '2025-09-06', summary: '중요 알림만 선택해서 받을 수 있는 설정이 필요합니다.'
+  },
+  {
+    id: 'T-122', title: '신규 캠페인 배너 문구 검토', team: '마케팅팀', teamSlug: 'product', status: '신규', priority: '높음', type: '기능 요청', reporter: '마케팅팀', createdAt: '2025-09-06', summary: '다음 캠페인에 사용할 배너 문구 검토가 필요합니다.'
+  },
+  {
+    id: 'T-123', title: '월간 비용 보고서 업로드', team: '경영지원팀', teamSlug: 'operations', status: '신규', priority: '보통', type: '기능 요청', reporter: '재무팀', createdAt: '2025-09-06', summary: '월간 비용 보고서를 포털에 업로드해 주세요.'
+  },
+  { id: 'T-124', title: '모바일 메뉴 간격 조정', team: '개발팀', teamSlug: 'engineering', status: '신규', priority: '보통', type: '버그', reporter: '고객지원', createdAt: '2025-09-07', summary: '작은 화면에서 메뉴 항목 간격이 좁습니다.' },
+  { id: 'T-125', title: '팀 소개 페이지 수정', team: '마케팅팀', teamSlug: 'product', status: '신규', priority: '보통', type: '기능 요청', reporter: '운영팀', createdAt: '2025-09-07', summary: '팀 소개 문구와 이미지를 업데이트해 주세요.' },
+  { id: 'T-126', title: '휴가 신청 양식 추가', team: '경영지원팀', teamSlug: 'operations', status: '신규', priority: '높음', type: '기능 요청', reporter: '임직원', createdAt: '2025-09-07', summary: '휴가 신청을 위한 기본 양식이 필요합니다.' },
+  { id: 'T-127', title: '검색 결과 정렬 오류', team: '개발팀', teamSlug: 'engineering', status: '신규', priority: '높음', type: '버그', reporter: '고객지원', createdAt: '2025-09-07', summary: '검색 결과가 최신순으로 정렬되지 않습니다.' }
 ];
 
 export const ticketDetails: Record<string, TicketDetail> = {
@@ -187,6 +198,13 @@ export const ticketDetails: Record<string, TicketDetail> = {
     comments: ['PDF + 마크다운 내보내기를 함께 고려합니다.', '첫 버전은 가볍게 가는 것이 좋습니다.'],
     linkedMeetings: ['all-hands-weekly-sync-2025-09-05']
   },
+  'T-124': { id: 'T-124', title: '모바일 메뉴 간격 조정', status: '신규', priority: '보통', type: '버그', ownerTeam: '개발팀', assignee: '미배정', reporter: '고객지원', description: '작은 화면에서 메뉴 항목 간격이 좁습니다.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-125': { id: 'T-125', title: '팀 소개 페이지 수정', status: '신규', priority: '보통', type: '기능 요청', ownerTeam: '마케팅팀', assignee: '미배정', reporter: '운영팀', description: '팀 소개 문구와 이미지를 업데이트해 주세요.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-126': { id: 'T-126', title: '휴가 신청 양식 추가', status: '신규', priority: '높음', type: '기능 요청', ownerTeam: '경영지원팀', assignee: '미배정', reporter: '임직원', description: '휴가 신청을 위한 기본 양식이 필요합니다.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-127': { id: 'T-127', title: '검색 결과 정렬 오류', status: '신규', priority: '높음', type: '버그', ownerTeam: '개발팀', assignee: '미배정', reporter: '고객지원', description: '검색 결과가 최신순으로 정렬되지 않습니다.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-121': { id: 'T-121', title: '대시보드 알림 설정 개선', status: '신규', priority: '보통', type: '기능 요청', ownerTeam: '개발팀', assignee: '미배정', reporter: '운영팀', description: '중요 알림만 선택해서 받을 수 있는 설정이 필요합니다.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-122': { id: 'T-122', title: '신규 캠페인 배너 문구 검토', status: '신규', priority: '높음', type: '기능 요청', ownerTeam: '마케팅팀', assignee: '미배정', reporter: '마케팅팀', description: '다음 캠페인에 사용할 배너 문구 검토가 필요합니다.', history: ['접수됨'], comments: [], linkedMeetings: [] },
+  'T-123': { id: 'T-123', title: '월간 비용 보고서 업로드', status: '신규', priority: '보통', type: '기능 요청', ownerTeam: '경영지원팀', assignee: '미배정', reporter: '재무팀', description: '월간 비용 보고서를 포털에 업로드해 주세요.', history: ['접수됨'], comments: [], linkedMeetings: [] },
   'T-088': {
     id: 'T-088',
     title: '입력 접수 중복 생성 버그',
@@ -208,25 +226,62 @@ export const meetings: Meeting[] = [
     slug: 'all-hands-weekly-sync-2025-09-05',
     date: '2025-09-05',
     title: '전체 회의 주간 동기화',
-    decisions: 3,
+    coverImage: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=85',
     comments: 8,
-    attendees: ['홍길동', '김민수', '박정우', '정하늘'],
-    agenda: ['들어온 티켓', '배포 장애', '회의록 내보내기 요청'],
-    decisionsList: ['개발팀이 T-102를 인수함', '마케팅팀이 PDF 내보내기 범위를 정리함', '경영지원팀이 중복 입력 문제를 수정함'],
-    actionItems: ['모바일 검증 QA', '내보내기 명세 작성', '중복 접수 처리 보강'],
-    linkedTickets: ['T-102', 'T-097', 'T-088']
+    linkedTicketIds: ['T-102', 'T-097', 'T-088'],
+    body: `## 참석자
+
+홍길동, 김민수, 박정우, 정하늘
+
+## 안건
+
+- 들어온 티켓
+- 배포 장애
+- 회의록 내보내기 요청
+
+## 결정사항
+
+1. 개발팀이 T-102를 인수함
+2. 마케팅팀이 PDF 내보내기 범위를 정리함
+3. 경영지원팀이 중복 입력 문제를 수정함
+
+## 액션 아이템
+
+- [ ] 모바일 검증 QA
+- [ ] 내보내기 명세 작성
+- [ ] 중복 접수 처리 보강
+
+## 연결된 티켓
+
+- T-102
+- T-097
+- T-088`
   },
   {
     slug: 'all-hands-weekly-sync-2025-08-29',
     date: '2025-08-29',
     title: '전체 회의 주간 동기화',
-    decisions: 2,
+    coverImage: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=85',
     comments: 5,
-    attendees: ['홍길동', '김민수', '박정우', '정하늘'],
-    agenda: ['주간 접수 검토', '로드맵 업데이트'],
-    decisionsList: ['새 접수 큐 승인', '회의록 형식 표준화'],
-    actionItems: ['템플릿 공개', '신규 멤버 초대'],
-    linkedTickets: []
+    linkedTicketIds: [],
+    body: `## 참석자
+
+홍길동, 김민수, 박정우, 정하늘
+
+## 안건
+
+- 주간 접수 검토
+- 로드맵 업데이트
+
+## 결정사항
+
+1. 새 접수 큐 승인
+2. 회의록 형식 표준화
+
+## 액션 아이템
+
+- [ ] 템플릿 공개
+- [ ] 신규 멤버 초대`
   }
 ];
 

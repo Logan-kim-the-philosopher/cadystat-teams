@@ -1,0 +1,30 @@
+---
+interface Props {
+  title: string;
+  date: string;
+  index?: number;
+  compact?: boolean;
+  short?: boolean;
+}
+
+const { title, date, index = 0, compact = false, short = false } = Astro.props;
+const number = compact ? date.slice(8) : String(index + 1).padStart(2, '0');
+---
+
+<div class={`relative ${short ? 'aspect-[16/8]' : 'aspect-[16/9]'} overflow-hidden p-6 text-white ${compact ? 'rounded-[2rem] border border-border bg-slate-950 sm:p-8' : index % 3 === 0 ? 'bg-slate-950' : index % 3 === 1 ? 'bg-zinc-900' : 'bg-stone-950'}`}>
+  <div class={`absolute -right-10 -top-16 font-black leading-none tracking-tighter text-white/[0.04] ${compact ? 'text-[10rem]' : 'text-[10rem]'}`}>{number}</div>
+  <div class={`absolute border-l border-white/20 ${compact ? 'bottom-6 left-6 right-6 top-6 sm:bottom-8 sm:left-8 sm:right-8 sm:top-8' : 'bottom-6 left-6 right-6 top-6'}`}></div>
+  <div class={`relative flex h-full flex-col justify-between pl-4 ${compact ? 'sm:pl-6' : ''}`}>
+    <div class="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.28em] text-white/50">
+      <span>Codystat / Meeting</span>
+      <span>{compact ? date.slice(0, 4) : String(index + 1).padStart(2, '0')}</span>
+    </div>
+    <div>
+      <p class={`font-black leading-none tracking-[-0.08em] ${compact ? 'text-6xl sm:text-8xl' : 'text-5xl'}`}>{date.slice(5, 7)}</p>
+      <div class="mt-2 flex items-end justify-between gap-4">
+        <p class={`font-medium leading-5 text-white/80 ${compact ? 'max-w-md text-base sm:text-lg sm:leading-6' : 'max-w-[13rem] text-sm'}`}>{title}</p>
+        <p class="text-xs uppercase tracking-[0.18em] text-white/45">{compact ? date : `${date.slice(0, 4)} / ${date.slice(8)}`}</p>
+      </div>
+    </div>
+  </div>
+</div>

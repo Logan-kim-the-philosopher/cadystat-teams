@@ -3,9 +3,10 @@ import '../styles/global.css';
 import { HeaderTabs } from '../components/app/header-tabs';
 
 const props = Astro.props;
-const title = props.title ?? 'cody-stat';
+const title = props.title ?? 'Codystat-Teams';
 const description = props.description ?? '팀 운영 포털';
 const currentPath = props.currentPath ?? Astro.url.pathname;
+const fullBleed = props.fullBleed ?? false;
 ---
 
 <html lang="ko">
@@ -17,25 +18,47 @@ const currentPath = props.currentPath ?? Astro.url.pathname;
   </head>
   <body class="min-h-screen bg-background text-foreground">
     <div class="min-h-screen bg-background">
-      <header class="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl">
-        <div class="mx-auto grid w-full max-w-7xl gap-4 px-4 py-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:px-6">
+      <header class="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl lg:relative">
+        <div class="mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:px-6 lg:relative">
           <a href="/" class="flex items-center gap-3">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm">
               CS
             </div>
-            <span class="text-sm font-semibold tracking-tight text-foreground">codystat</span>
+            <span class="text-sm font-semibold tracking-tight text-foreground">Codystat-Teams</span>
           </a>
 
-          <div class="min-w-0 lg:justify-self-center">
+          <div class="col-span-2 row-start-2 min-w-0 lg:col-span-1 lg:row-start-auto lg:absolute lg:left-1/2 lg:top-1/2 lg:w-max lg:-translate-x-1/2 lg:-translate-y-1/2">
             <HeaderTabs currentPath={currentPath} />
           </div>
 
+          <a
+            href="/login"
+            class="flex h-10 items-center justify-center gap-2 justify-self-end rounded-xl px-3 text-foreground transition-colors hover:bg-muted"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5 fill-none stroke-current stroke-2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="m10 17 5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="text-sm font-medium">로그인</span>
+          </a>
         </div>
       </header>
 
-      <main class="mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
+      <main class={fullBleed ? 'w-full' : 'mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8'}>
         <slot />
       </main>
     </div>
+    <script>
+      // Warm the organization cache from every page so /organization does not
+      // pay the Plane API latency when the user eventually opens it.
+      const key = 'codystat:organization-prefetch-at';
+      const lastPrefetch = Number(sessionStorage.getItem(key) ?? '0');
+      if (Date.now() - lastPrefetch > 30_000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        void fetch('/api/plane/organization', { credentials: 'same-origin' }).catch(() => {
+          sessionStorage.removeItem(key);
+        });
+      }
+    </script>
   </body>
 </html>

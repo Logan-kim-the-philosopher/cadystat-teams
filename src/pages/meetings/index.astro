@@ -2,55 +2,86 @@
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { SectionTitle } from '../../components/app/section-title';
-import { meetings } from '../../lib/site-data';
+import MeetingEditorialThumbnail from '../../components/app/meeting-editorial-thumbnail.astro';
+import { getMeetingNotes } from '../../lib/server-meetings';
+
+const meetings = await getMeetingNotes();
+
+const latestMeeting = meetings[0];
+const nextMeeting = '9월 12일 (금) · 14:00';
 ---
 
-<SiteLayout title="회의록 · cody-stat" description="전체 회의 기록과 연결된 댓글">
-  <SectionTitle
-    eyebrow="회의록"
-    title="전체 회의록"
-    description="회사 전체 회의 기록만 이곳에 보관합니다. 팀별 회의는 다른 공간에서 따로 운영합니다."
-  >
-    <Badge variant="outline">댓글 사용 가능</Badge>
-  </SectionTitle>
-
-  <div class="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">회의 규칙</CardTitle>
-        <CardDescription>일관성을 유지합니다</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul class="space-y-3 text-sm leading-6 text-muted-foreground">
-          <li>• 회사 전체 회의만 한 타임라인에 기록합니다.</li>
-          <li>• 관련 티켓을 연결해 결정 사항을 추적합니다.</li>
-          <li>• 댓글은 각 회의록에 붙어 있도록 유지합니다.</li>
-        </ul>
-      </CardContent>
-    </Card>
-
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">회의록 보관함</CardTitle>
-        <CardDescription>최근 전체 회의 기록</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div class="space-y-3">
-          {meetings.map((meeting) => (
-            <a href={`/meetings/${meeting.slug}`} class="block rounded-2xl border border-border p-4 transition hover:bg-muted/50">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p class="text-sm text-muted-foreground">{meeting.date}</p>
-                  <h3 class="mt-1 font-semibold">{meeting.title}</h3>
-                  <p class="mt-2 text-sm text-muted-foreground">결정사항 {meeting.decisions} · 댓글 {meeting.comments}</p>
-                </div>
-                <Badge variant="blue">전체회의</Badge>
-              </div>
-            </a>
-          ))}
+<SiteLayout title="회의록 · Codystat-Teams" description="전체 회의 기록과 연결된 댓글">
+  <section class="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white shadow-soft lg:grid lg:grid-cols-[1fr_0.8fr] lg:items-center">
+    <div class="h-full p-7 sm:p-8">
+      <div class="flex h-full flex-col">
+        <Badge variant="outline" className="w-fit border-white/20 text-slate-300">다음 회의: {nextMeeting}</Badge>
+        <div class="flex flex-1 flex-col justify-center">
+          <h1 class="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">대화에서 결정까지, 함께 만들고 기록합니다</h1>
+          <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">회의 녹음을 바탕으로 AI가 논의의 핵심 맥락과 후속 작업을 정리합니다</p>
         </div>
-      </CardContent>
-    </Card>
+        <div class="mt-auto flex flex-wrap items-center gap-4 pt-7">
+          {latestMeeting ? (
+            <a href={`/meetings/${latestMeeting.slug}`} class="inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-100">최근 회의 바로가기 →</a>
+          ) : (
+            <span class="text-sm text-slate-400">등록된 회의록이 없습니다.</span>
+          )}
+        </div>
+      </div>
+    </div>
+    <div class="h-full p-7 sm:p-8">
+      <Card className="h-full border-white/15 bg-white/5 text-white shadow-lg backdrop-blur-xl">
+        <CardHeader className="p-3 pb-2"><CardTitle className="text-xs font-normal text-slate-400">최근 댓글</CardTitle></CardHeader>
+        <CardContent className="p-4 pt-0"><div data-recent-comments class="min-h-40 max-h-40 overflow-y-auto divide-y divide-white/15 text-xs text-slate-200">
+          <div class="animate-pulse space-y-2 py-2 first:pt-0"><div class="h-3 w-24 rounded bg-white/15"></div><div class="h-3 w-4/5 rounded bg-white/10"></div></div>
+          <div class="animate-pulse space-y-2 py-2"><div class="h-3 w-20 rounded bg-white/15"></div><div class="h-3 w-3/5 rounded bg-white/10"></div></div>
+          <div class="animate-pulse space-y-2 py-2"><div class="h-3 w-28 rounded bg-white/15"></div><div class="h-3 w-2/3 rounded bg-white/10"></div></div>
+        </div></CardContent>
+      </Card>
+    </div>
+  </section>
+
+
+  <div class="mt-10 flex items-end justify-between gap-4">
+    <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Archive</p><h2 class="mt-2 text-2xl font-semibold tracking-tight">전체 회의록</h2></div>
+    <span class="text-sm text-muted-foreground">{meetings.length}개의 기록</span>
   </div>
+
+  <div class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    {meetings.length === 0 ? (
+      <Card className="sm:col-span-2 lg:col-span-4">
+        <CardContent className="py-12 text-center text-sm text-muted-foreground">아직 등록된 회의록이 없습니다.</CardContent>
+      </Card>
+    ) : meetings.map((meeting, index) => (
+      <a
+        href={`/meetings/${meeting.slug}`}
+        class="group block overflow-hidden rounded-2xl border border-border bg-card text-left transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg"
+      >
+        <MeetingEditorialThumbnail title={meeting.title} date={meeting.date} index={index} short />
+        <div class="p-5">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="line-clamp-2 text-lg font-semibold leading-7 transition-colors group-hover:text-primary">{meeting.title}</h3>
+          </div>
+          <div class="mt-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
+            <span>댓글 {meeting.comments}</span>
+            <span>{meeting.date}</span>
+          </div>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <script define:vars={{ meetingTitles: Object.fromEntries(meetings.map((meeting) => [meeting.slug, meeting.title])) }}>
+    const container = document.querySelector('[data-recent-comments]');
+    const titles = meetingTitles;
+    const escapeHtml = (value) => value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' })[character] ?? character);
+    (async () => {
+      try {
+        const response = await fetch('/api/meeting-comments');
+      if (!response.ok) throw new Error();
+      const comments = await response.json();
+      container.innerHTML = comments.length ? comments.map((comment) => `<a href="/meetings/${encodeURIComponent(comment.meeting_slug)}" class="block py-2 first:pt-0 transition hover:text-white"><div class="flex items-center justify-between gap-3"><span class="flex items-center gap-1.5 font-medium text-slate-100"><svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(comment.author)}</span><time class="text-[11px] text-slate-400">${new Date(comment.created_at).toLocaleDateString('ko-KR')}</time></div><div class="mt-1 flex items-center justify-between gap-3"><p class="min-w-0 flex-1 line-clamp-1 text-slate-200">${escapeHtml(comment.body)}</p><p class="max-w-[9rem] shrink-0 truncate text-[11px] text-slate-400">${escapeHtml(titles[comment.meeting_slug] ?? '회의록')}</p></div></a>`).join('') : '<p class="py-3 text-muted-foreground">아직 댓글이 없습니다.</p>';
+      } catch { container.innerHTML = '<p class="py-3 text-muted-foreground">댓글을 불러오지 못했습니다.</p>'; }
+    })();
+  </script>
 </SiteLayout>

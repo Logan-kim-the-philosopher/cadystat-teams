@@ -1,110 +1,120 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { Badge } from '../../components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { meetingDetails } from '../../lib/site-data';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { ticketDetails } from '../../lib/site-data';
+import { getMeetingNotes } from '../../lib/server-meetings';
+import { renderMarkdown } from '../../lib/renderers/markdown';
+import MeetingEditorialThumbnail from '../../components/app/meeting-editorial-thumbnail.astro';
+
+const meetings = await getMeetingNotes();
 
 export function getStaticPaths() {
-  return Object.keys(meetingDetails).map((slug) => ({ params: { slug } }));
+  return [];
 }
 
 const { slug } = Astro.params;
-const meeting = meetingDetails[slug];
+const meeting = meetings.find((item) => item.slug === slug);
+const linkedTickets = meeting?.linkedTicketIds.map((ticketId) => ticketDetails[ticketId]).filter(Boolean) ?? [];
 ---
 
 <SiteLayout title={`${meeting?.title ?? '회의록'} · 회의록`} description="전체 회의록 상세 화면">
   {meeting ? (
-    <div class="space-y-6">
-      <Card>
-        <CardHeader>
-          <div class="flex flex-wrap items-center gap-2">
-            <Badge variant="blue">전체회의</Badge>
-            <Badge variant="outline">{meeting.date}</Badge>
-            <Badge variant="outline">댓글 {meeting.comments}</Badge>
+    <article class="mx-auto max-w-4xl pb-16 pt-0">
+      <div class="flex items-center justify-between gap-4">
+        <a href="/meetings" class="text-base font-medium text-muted-foreground transition hover:text-foreground"><span class="text-lg">←</span> 뒤로가기</a>
+        <nav aria-label="breadcrumb" class="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
+          <a href="/" class="transition hover:text-foreground">홈</a>
+          <span>/</span>
+          <a href="/meetings" class="transition hover:text-foreground">회의록</a>
+          <span>/</span>
+          <span class="max-w-48 truncate text-foreground">{meeting.title}</span>
+        </nav>
+      </div>
+
+      <header class="mt-4 border-b border-border pb-8">
+        <h1 class="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">{meeting.title}</h1>
+        <div class="mt-5 flex flex-wrap items-center gap-2">
+          <Badge variant="outline">{meeting.date}</Badge>
+          <Badge variant="outline">댓글 {meeting.comments}</Badge>
+        </div>
+      </header>
+
+      <MeetingEditorialThumbnail title={meeting.title} date={meeting.date} compact />
+
+      <div class="rich-text mt-10" set:html={renderMarkdown(meeting.body)} />
+
+      {linkedTickets.length > 0 && (
+        <section class="mt-12" aria-labelledby="linked-tickets-title">
+          <div class="mb-4 flex items-center justify-between gap-3">
+            <h2 id="linked-tickets-title" class="text-xl font-semibold tracking-tight">연결된 티켓</h2>
+            <span class="text-sm text-muted-foreground">{linkedTickets.length}개</span>
           </div>
-          <CardTitle className="text-3xl">{meeting.title}</CardTitle>
-          <CardDescription>회사 전체 회의 기록과 연결된 티켓, 댓글 흐름을 한 페이지에서 봅니다.</CardDescription>
+          <div class="grid gap-3 sm:grid-cols-2">
+            {linkedTickets.map((ticket) => (
+              <a href={`/tickets/${ticket.id}`} class="group rounded-xl border border-border p-4 transition hover:border-primary/50 hover:bg-muted/40">
+                <div class="flex items-start justify-between gap-3">
+                  <span class="text-sm font-semibold text-primary">{ticket.id}</span>
+                  <Badge variant="outline">{ticket.status}</Badge>
+                </div>
+                <h3 class="mt-2 font-medium leading-6 transition group-hover:text-primary">{ticket.title}</h3>
+                <p class="mt-2 text-sm text-muted-foreground">{ticket.ownerTeam} · {ticket.assignee}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <Card className="mt-12">
+        <CardHeader>
+          <CardTitle className="text-lg">댓글</CardTitle>
         </CardHeader>
+        <CardContent>
+          <form data-comment-form class="space-y-3">
+            <textarea name="body" required placeholder="댓글을 입력하세요" class="min-h-24 w-full resize-y rounded-xl border border-border bg-muted/40 p-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"></textarea>
+            <div class="flex justify-end">
+              <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">댓글 등록</button>
+            </div>
+          </form>
+          <p data-comment-status class="mt-3 hidden text-sm text-destructive"></p>
+          <div data-comment-list class="mt-6 divide-y divide-border text-sm text-muted-foreground"></div>
+        </CardContent>
       </Card>
 
-      <div class="grid gap-6 xl:grid-cols-[1fr_0.9fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">안건</CardTitle>
-            <CardDescription>논의한 주제</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul class="space-y-3 text-sm text-muted-foreground">
-              {meeting.agenda.map((item) => <li class="rounded-xl border border-border bg-muted/40 p-3">{item}</li>)}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">참석 및 후속</CardTitle>
-            <CardDescription>누가 있었고 무엇을 할지</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="space-y-4 text-sm">
-              <div>
-                <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">참석자</p>
-                <p class="mt-2 text-foreground">{meeting.attendees.join(', ')}</p>
-              </div>
-              <div>
-                <p class="text-xs uppercase tracking-[0.2em] text-muted-foreground">액션 아이템</p>
-                <ul class="mt-2 space-y-2 text-muted-foreground">
-                  {meeting.actionItems.map((item) => <li>• {item}</li>)}
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div class="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">결정사항</CardTitle>
-            <CardDescription>확정된 내용</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol class="space-y-3 text-sm text-muted-foreground">
-              {meeting.decisionsList.map((item, index) => (
-                <li class="flex gap-3">
-                  <span class="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{index + 1}</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">연결된 티켓</CardTitle>
-            <CardDescription>회의에서 다룬 항목</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="space-y-2">
-              {meeting.linkedTickets.length ? meeting.linkedTickets.map((ticketId) => (
-                <a href={`/tickets/${ticketId}`} class="block rounded-xl border border-border p-3 text-sm transition hover:bg-muted/50">
-                  {ticketId}
-                </a>
-              )) : <p class="text-sm text-muted-foreground">연결된 티켓이 아직 없습니다.</p>}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      <script define:vars={{ meetingSlug: meeting.slug }}>
+        const form = document.querySelector('[data-comment-form]');
+        const list = document.querySelector('[data-comment-list]');
+        const status = document.querySelector('[data-comment-status]');
+        const escapeHtml = (value) => value.replace(/[&<>'\"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '\"': '&quot;' })[character] ?? character);
+        const renderComments = (comments) => {
+          if (!list) return;
+          list.innerHTML = comments.length ? comments.map((comment) => `<div class="py-4 first:pt-0"><div class="flex items-center justify-between gap-3 text-xs text-muted-foreground"><span class="flex items-center gap-1.5"><svg aria-hidden="true" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>${escapeHtml(comment.author)}</span><time>${new Date(comment.created_at).toLocaleString('ko-KR')}</time></div><p class="mt-2 whitespace-pre-wrap leading-6 text-foreground">${escapeHtml(comment.body)}</p></div>`).join('') : '<p class="text-sm text-muted-foreground">아직 댓글이 없습니다.</p>';
+        };
+        const loadComments = async () => { const response = await fetch(`/api/meeting-comments?slug=${encodeURIComponent(meetingSlug)}`); if (!response.ok) throw new Error('댓글을 불러오지 못했습니다.'); renderComments(await response.json()); };
+        void loadComments();
+        form?.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const input = form.elements.namedItem('body');
+          const button = form.querySelector('button');
+          if (!input.value.trim() || !button) return;
+          button.disabled = true;
+          try {
+            const response = await fetch('/api/meeting-comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meeting_slug: meetingSlug, body: input.value }) });
+            if (!response.ok) throw new Error('댓글을 등록하지 못했습니다.');
+            input.value = '';
+            await loadComments();
+            list?.firstElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            status?.classList.add('hidden');
+          } catch (error) {
+            if (status) { status.textContent = error instanceof Error ? error.message : '댓글을 등록하지 못했습니다.'; status.classList.remove('hidden'); }
+          } finally { button.disabled = false; }
+        });
+      </script>
+    </article>
   ) : (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">회의록을 찾을 수 없음</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p class="text-sm text-muted-foreground">요청한 회의록이 존재하지 않습니다.</p>
-      </CardContent>
+      <CardHeader><CardTitle className="text-lg">회의록을 찾을 수 없음</CardTitle></CardHeader>
+      <CardContent><p class="text-sm text-muted-foreground">요청한 회의록이 존재하지 않습니다.</p></CardContent>
     </Card>
   )}
 </SiteLayout>

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(15 23 42 / 0.35); }
+  60% { box-shadow: 0 0 0 8px rgb(15 23 42 / 0); }
+}
+
+.animate-pulse-ring { animation: pulse-ring 1.8s ease-out infinite; }
+
 :root {
   --background: 210 40% 98%;
   --foreground: 222.2 47.4% 11.2%;
@@ -39,6 +46,60 @@ body {
 
 ::selection {
   background: rgba(37, 99, 235, 0.18);
+}
+
+@layer components {
+  .rich-text {
+    @apply text-base leading-8 text-muted-foreground;
+  }
+
+  .rich-text h2 {
+    @apply mb-4 mt-8 text-xl font-semibold tracking-tight text-foreground;
+  }
+
+  .rich-text h2:first-child {
+    @apply mt-0;
+  }
+
+  .rich-text h3 {
+    @apply mb-3 mt-6 text-lg font-semibold text-foreground;
+  }
+
+  .rich-text p {
+    @apply my-4;
+  }
+
+  .rich-text ul {
+    @apply my-4 list-disc space-y-2 pl-6;
+  }
+
+  .rich-text ol {
+    @apply my-4 list-decimal space-y-2 pl-6;
+  }
+
+  .rich-text li::marker {
+    @apply text-primary;
+  }
+
+  .rich-text a {
+    @apply text-primary underline underline-offset-4;
+  }
+
+  .rich-text blockquote {
+    @apply my-5 border-l-2 border-primary pl-4 italic;
+  }
+
+  .rich-text code {
+    @apply rounded bg-muted px-1.5 py-0.5 text-sm;
+  }
+
+  .rich-text pre {
+    @apply my-5 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100;
+  }
+
+  .rich-text pre code {
+    @apply bg-transparent p-0;
+  }
 }
 
 @layer utilities {

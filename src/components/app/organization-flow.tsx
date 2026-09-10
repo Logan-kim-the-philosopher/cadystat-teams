@@ -1,13 +1,14 @@
 import * as React from 'react';
 import dagre from '@dagrejs/dagre';
-import { Background, Handle, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
+import { Background, Handle, Panel, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
 import type { OrgMember, OrgUnit } from '../../lib/site-data';
+import { OrganizationMemberNode, type OrganizationMemberNodeData } from './organization-member-node';
 
 type SheetNodeData = {
   name: string;
-  description: string;
   memberCount: number;
 };
 
@@ -15,15 +16,10 @@ type LeadNodeData = {
   name: string;
   title: string;
   role: 'lead';
+  gender: 'male' | 'female';
   avatar?: string;
 };
 
-type MemberNodeData = {
-  name: string;
-  title: string;
-  role: 'member';
-  compact?: boolean;
-};
 
 type SheetLayout = {
   unit: OrgUnit;
@@ -40,12 +36,13 @@ const SHEET_GAP = 40;
 const SHEET_HEADER_HEIGHT = 64;
 const SHEET_PADDING_X = 16;
 const SHEET_PADDING_Y = 18;
+const SHEET_HEADER_GAP = 0;
 const LEAD_CARD_HEIGHT = 88;
 const HIER_MEMBER_WIDTH = 220;
 const HIER_MEMBER_HEIGHT = 88;
 const HIER_MEMBER_GAP = 16;
-const FLAT_MEMBER_WIDTH = 124;
-const FLAT_MEMBER_HEIGHT = 72;
+const FLAT_MEMBER_WIDTH = 220;
+const FLAT_MEMBER_HEIGHT = 88;
 const FLAT_MEMBER_GAP = 12;
 const SHEET_Y = 190;
 const TOP_Y = 0;
@@ -54,20 +51,27 @@ function initialOf(name: string) {
   return name.trim().charAt(0);
 }
 
+function profileIllustration(gender: 'male' | 'female') {
+  return gender === 'male' ? '/avatars/profile-male.svg' : '/avatars/profile-female.svg';
+}
+
 function SheetNode({ data }: NodeProps<SheetNodeData>) {
   return (
-    <div className="relative flex h-full w-full flex-col rounded-[28px] border border-slate-200 bg-white/90 px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+    <>
+    <style>{`.react-flow__node:hover > .relative { border-color: rgb(148 163 184); box-shadow: 0 20px 35px rgba(15,23,42,.12); }`}</style>
+    <div className="relative flex h-full w-full cursor-pointer flex-col rounded-[28px] border-2 border-slate-200 bg-[#FCFCFD] px-5 py-4 transition-shadow hover:border-slate-300 hover:shadow-xl">
       <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" />
-      <div className="flex items-start justify-between gap-3">
+      <div className="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-3 rounded-t-[26px] border-b-2 border-slate-200 bg-slate-200/70 px-5 py-2">
         <div>
-          <h3 className="text-base font-bold text-slate-900">{data.name}</h3>
+          <h3 className="text-lg font-bold text-slate-900">{data.name}</h3>
         </div>
-        <span className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+        <span className="text-lg font-semibold text-slate-600">
           {data.memberCount}명
         </span>
       </div>
       <Handle type="source" position={Position.Bottom} className="!h-2 !w-2 !border-0 !bg-transparent" />
     </div>
+    </>
   );
 }
 
@@ -75,7 +79,7 @@ function LeadNode({ data }: NodeProps<LeadNodeData>) {
   return (
     <div className="flex h-full w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
-        {data.avatar ?? initialOf(data.name)}
+        <img src={data.avatar ?? profileIllustration(data.gender)} alt="" className="h-full w-full object-cover" />
       </div>
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
@@ -89,40 +93,21 @@ function LeadNode({ data }: NodeProps<LeadNodeData>) {
   );
 }
 
-function MemberNode({ data }: NodeProps<MemberNodeData>) {
+function JunctionNode() {
   return (
-    <div
-      className={
-        data.compact
-          ? 'flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
-          : 'flex h-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]'
-      }
-    >
-      {!data.compact ? <Handle type="target" position={Position.Top} className="!h-2 !w-2 !border-0 !bg-transparent" /> : null}
-      <div
-        className={
-          data.compact
-            ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white shadow-sm'
-            : 'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm'
-        }
-      >
-        {initialOf(data.name)}
-      </div>
-      <div className="min-w-0">
-        <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-semibold text-slate-900">{data.name}</p>
-          <p className="shrink-0 text-xs font-medium text-slate-400">{data.role}</p>
-        </div>
-        <p className={data.compact ? 'truncate text-xs text-slate-500' : 'truncate text-sm text-slate-500'}>{data.title}</p>
-      </div>
+    <div className="h-px w-px">
+      <Handle type="target" position={Position.Top} className="!h-px !w-px !border-0 !bg-transparent" />
+      <Handle type="source" position={Position.Bottom} className="!h-px !w-px !border-0 !bg-transparent" />
     </div>
   );
 }
 
+
 const nodeTypes = {
   sheet: SheetNode,
   lead: LeadNode,
-  member: MemberNode
+  member: OrganizationMemberNode,
+  junction: JunctionNode
 };
 
 function resolveSheetLayout(unit: OrgUnit): SheetLayout {
@@ -149,7 +134,7 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
     const width = Math.max(SHEET_WIDTH, SHEET_PADDING_X * 2 + maxBreadth * HIER_MEMBER_WIDTH + Math.max(maxBreadth - 1, 0) * HIER_MEMBER_GAP);
     const height = Math.max(
       276,
-      SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + members.length * HIER_MEMBER_HEIGHT + Math.max(members.length - 1, 0) * HIER_MEMBER_GAP + SHEET_PADDING_Y
+      SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + members.length * HIER_MEMBER_HEIGHT + Math.max(members.length - 1, 0) * HIER_MEMBER_GAP + SHEET_PADDING_Y
     );
 
     return {
@@ -165,7 +150,7 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
 
   const rowWidth = members.length * FLAT_MEMBER_WIDTH + Math.max(members.length - 1, 0) * FLAT_MEMBER_GAP;
   const width = Math.max(SHEET_WIDTH, SHEET_PADDING_X * 2 + rowWidth);
-  const height = SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + FLAT_MEMBER_HEIGHT + SHEET_PADDING_Y;
+  const height = SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP + FLAT_MEMBER_HEIGHT + SHEET_PADDING_Y;
 
   return {
     sheet: unit,
@@ -180,6 +165,8 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
 
 function buildGraph(units: OrgUnit[]) {
   const layouts = units
+    .slice()
+    .sort((a, b) => (a.name === '운영진' ? -1 : b.name === '운영진' ? 1 : 0))
     .map((unit) => resolveSheetLayout(unit))
     .filter((layout): layout is SheetLayout => Boolean(layout));
 
@@ -200,7 +187,6 @@ function buildGraph(units: OrgUnit[]) {
       position: { x: sheetX, y: SHEET_Y },
       data: {
         name: sheet.name,
-        description: sheet.description,
         memberCount: sheet.people.length
       },
       style: {
@@ -208,8 +194,8 @@ function buildGraph(units: OrgUnit[]) {
         height
       },
       draggable: false,
-      selectable: false,
-      zIndex: -1
+      selectable: true,
+      zIndex: 0
     });
 
     if (mode === 'hierarchical' && leadPerson) {
@@ -217,11 +203,12 @@ function buildGraph(units: OrgUnit[]) {
       nodes.push({
         id: leadNodeId,
         type: 'lead',
-        position: { x: sheetX + SHEET_PADDING_X, y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y },
+        position: { x: sheetX + SHEET_PADDING_X, y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP },
         data: {
           name: leadPerson.name,
           title: leadPerson.title,
-          role: '팀장'
+          role: '팀장',
+          gender: leadPerson.gender
         },
         style: {
           width: HIER_MEMBER_WIDTH,
@@ -242,12 +229,13 @@ function buildGraph(units: OrgUnit[]) {
           type: 'member',
           position: {
             x: sheetX + SHEET_PADDING_X,
-            y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + memberIndex * (HIER_MEMBER_HEIGHT + HIER_MEMBER_GAP)
+            y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP + LEAD_CARD_HEIGHT + SHEET_PADDING_Y + memberIndex * (HIER_MEMBER_HEIGHT + HIER_MEMBER_GAP)
           },
           data: {
             name: person.name,
             title: person.title,
-            role: '팀원'
+            role: '팀원',
+            gender: person.gender
           },
           style: {
             width: HIER_MEMBER_WIDTH,
@@ -268,12 +256,13 @@ function buildGraph(units: OrgUnit[]) {
         type: 'member',
         position: {
           x: sheetX + SHEET_PADDING_X + memberIndex * (FLAT_MEMBER_WIDTH + FLAT_MEMBER_GAP),
-          y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y
+          y: SHEET_Y + SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP
         },
         data: {
           name: person.name,
           title: person.title,
-          role: 'member',
+          role: '팀원',
+          gender: person.gender,
           compact: true
         },
         style: {
@@ -296,8 +285,8 @@ function buildGraph(units: OrgUnit[]) {
         target: layout.sheet.id,
         type: 'smoothstep',
         style: {
-          stroke: '#d1d5db',
-          strokeWidth: 1.5
+          stroke: '#94a3b8',
+          strokeWidth: 2
         }
       });
     });
@@ -306,7 +295,7 @@ function buildGraph(units: OrgUnit[]) {
   // Dagre lays out organization cards according to parentId. Member nodes keep
   // their positions inside each card and move together with that card.
   const dagreGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 110, marginx: 24, marginy: 24 });
+  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 56, marginx: 24, marginy: 24 });
 
   layouts.forEach((layout) => {
     dagreGraph.setNode(layout.sheet.id, { width: layout.width, height: layout.height });
@@ -317,13 +306,25 @@ function buildGraph(units: OrgUnit[]) {
   dagre.layout(dagreGraph);
 
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const childTopByParent = new Map<string, number>();
+  layouts.forEach((layout) => {
+    if (layout.sheet.parentId === null) return;
+    const dagrePosition = dagreGraph.node(layout.sheet.id);
+    if (!dagrePosition) return;
+    const top = dagrePosition.y - layout.height / 2;
+    const current = childTopByParent.get(layout.sheet.parentId);
+    childTopByParent.set(layout.sheet.parentId, current === undefined ? top : Math.max(current, top));
+  });
   layouts.forEach((layout) => {
     const sheetNode = nodesById.get(layout.sheet.id);
     const dagrePosition = dagreGraph.node(layout.sheet.id);
     if (!sheetNode || !dagrePosition) return;
 
     const nextX = dagrePosition.x - layout.width / 2;
-    const nextY = dagrePosition.y - layout.height / 2;
+    const dagreTop = dagrePosition.y - layout.height / 2;
+    const nextY = layout.sheet.parentId === null
+      ? dagreTop
+      : childTopByParent.get(layout.sheet.parentId) ?? dagreTop;
     const deltaX = nextX - sheetNode.position.x;
     const deltaY = nextY - sheetNode.position.y;
     const memberIds = new Set(layout.sheet.people.map((person) => person.id));
@@ -339,7 +340,7 @@ function buildGraph(units: OrgUnit[]) {
     // Lay out members from reportsToMemberId instead of treating them as one list.
     const memberGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
     const memberWidth = HIER_MEMBER_WIDTH;
-    memberGraph.setGraph({ rankdir: 'TB', nodesep: 16, ranksep: 24, marginx: 0, marginy: 0 });
+    memberGraph.setGraph({ rankdir: 'TB', nodesep: 16, ranksep: 56, marginx: 0, marginy: 0 });
     const leadNodeId = `${layout.sheet.id}-lead`;
     memberGraph.setNode(leadNodeId, { width: memberWidth, height: LEAD_CARD_HEIGHT });
     layout.members.forEach((person) => memberGraph.setNode(person.id, { width: memberWidth, height: HIER_MEMBER_HEIGHT }));
@@ -353,28 +354,9 @@ function buildGraph(units: OrgUnit[]) {
       childrenByManager.set(managerId, [...(childrenByManager.get(managerId) ?? []), person.id]);
     });
     childrenByManager.forEach((children, managerId) => {
-      if (children.length < 2) {
-        memberGraph.setEdge(managerId, children[0]);
-        edges.push({ id: `${managerId}-${children[0]}`, source: managerId, target: children[0], type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
-        return;
-      }
-      const junctionId = `${managerId}-junction`;
-      memberGraph.setNode(junctionId, { width: 1, height: 1 });
-      memberGraph.setEdge(managerId, junctionId);
-      edges.push({ id: `${managerId}-${junctionId}`, source: managerId, target: junctionId, type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
       children.forEach((childId) => {
-        memberGraph.setEdge(junctionId, childId);
-        edges.push({ id: `${junctionId}-${childId}`, source: junctionId, target: childId, type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
-      });
-      nodes.push({
-        id: junctionId,
-        type: 'member',
-        position: { x: 0, y: 0 },
-        data: { name: '', title: '', role: 'member' },
-        style: { width: 1, height: 1, opacity: 0, pointerEvents: 'none' },
-        draggable: false,
-        selectable: false,
-        zIndex: 1
+        memberGraph.setEdge(managerId, childId);
+        edges.push({ id: `${managerId}-${childId}`, source: managerId, target: childId, type: 'smoothstep', zIndex: 2, style: { stroke: '#94a3b8', strokeWidth: 2 } });
       });
     });
     nodes.forEach((node) => nodesById.set(node.id, node));
@@ -390,7 +372,7 @@ function buildGraph(units: OrgUnit[]) {
       sheetNode.style = {
         ...sheetNode.style,
         width: Math.max(layout.width, (memberGraphSize.width ?? 0) + SHEET_PADDING_X * 2),
-        height: SHEET_HEADER_HEIGHT + SHEET_PADDING_Y * 2 + (memberGraphSize.height ?? 0)
+        height: SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP + SHEET_PADDING_Y + (memberGraphSize.height ?? 0)
       };
     }
 
@@ -404,7 +386,7 @@ function buildGraph(units: OrgUnit[]) {
       const nodeHeight = isJunction ? 1 : nodeId === leadNodeId ? LEAD_CARD_HEIGHT : HIER_MEMBER_HEIGHT;
       node.position = {
         x: nextX + memberOffsetX + position.x - nodeWidth / 2,
-        y: nextY + SHEET_HEADER_HEIGHT + SHEET_PADDING_Y + position.y - nodeHeight / 2
+        y: nextY + SHEET_HEADER_HEIGHT + SHEET_HEADER_GAP + position.y - nodeHeight / 2
       };
     });
 
@@ -435,30 +417,211 @@ type OrganizationFlowProps = {
 };
 
 export function OrganizationFlow({ units }: OrganizationFlowProps) {
-  const { nodes, edges } = React.useMemo(() => buildGraph(units), [units]);
+  const [planeUnits, setPlaneUnits] = React.useState<OrgUnit[] | null>(null);
+  const [planeError, setPlaneError] = React.useState<string | null>(null);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = React.useState(false);
+  const [editingUnit, setEditingUnit] = React.useState<OrgUnit | null>(null);
+  const [isTeamDirty, setIsTeamDirty] = React.useState(false);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = React.useState(false);
+  const [organizationRefresh, setOrganizationRefresh] = React.useState(0);
+  const [editingMember, setEditingMember] = React.useState<OrgMember | null>(null);
+  const [draftMembers, setDraftMembers] = React.useState<Record<string, OrgMember[]>>({});
+  const [isOrganizationSaving, setIsOrganizationSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    fetch(`/api/plane/organization?refresh=${Date.now()}`)
+      .then(async (response) => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(payload?.error ?? `Plane API 오류 (${response.status})`);
+        return payload;
+      })
+      .then((payload) => {
+        if (!active) return;
+        if (!payload?.members) throw new Error('Plane 조직도 응답에 members가 없습니다.');
+        setPlaneError(null);
+        const projectSlugById: Record<string, string> = {
+          'f74a3d41-b751-47c7-9e7e-dccb6fdd1376': 'executive',
+          '2ed7cfb0-8c81-4dcf-bbc6-2577ce3bc3ad': 'product',
+          'dbede9f0-feb1-4c4c-88dd-0cf213b67aa3': 'engineering',
+          '9504146c-a139-4476-a4be-133c997ef4d4': 'operations',
+        };
+        const planeTeams = payload.teams as Array<{ id: string; name: string; parentTeamId: string | null; leadMemberId: string | null }>;
+        const planeMembers = payload.members as Array<{ id: string; name: string; title: string; gender?: 'male' | 'female' | null; teamProjectId: string | null; reportsTo: string | null; sortOrder: number }>;
+        const executiveTeam = planeTeams.find((team) => team.name === '운영진') ?? planeTeams[0];
+        const nextUnits = planeTeams.map((team, index) => {
+          const slug = projectSlugById[team.id] ?? `plane-${team.id}`;
+          const people = planeMembers
+            .filter((member) => member.teamProjectId === team.id)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((member) => ({
+              id: member.id,
+              name: member.name,
+              title: member.title,
+              gender: member.gender ?? 'male',
+              orgUnitId: team.id,
+              reportsToMemberId: member.reportsTo,
+            }));
+          const lead = people.find((person) => person.reportsToMemberId === null) ?? people[0] ?? null;
+          return {
+            id: team.id,
+            slug,
+            name: team.name,
+            parentId: team.parentTeamId ?? null,
+            leadMemberId: team.leadMemberId ?? null,
+            members: people.length,
+            tickets: 0,
+            tone: index % 2 ? 'green' : 'blue',
+            people,
+          };
+        });
+        setPlaneUnits(nextUnits);
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setPlaneError(error instanceof Error ? error.message : 'Plane 조직도 조회에 실패했습니다.');
+          setPlaneUnits(null);
+        }
+      });
+
+
+    return () => {
+      active = false;
+    };
+  }, [units, organizationRefresh]);
+
+  // Do not render the static fallback before Plane responds; otherwise the
+  // mock team name briefly flashes before the Plane name replaces it.
+  const canvasUnits = planeUnits ?? [];
+  const renderedUnits = (planeUnits ?? []).map((unit) => ({
+    ...unit,
+    people: draftMembers[unit.id] ?? unit.people,
+    members: (draftMembers[unit.id] ?? unit.people).length,
+  }));
+  React.useEffect(() => {
+    if (!editingUnit || !planeUnits) return;
+    const updated = planeUnits.find((unit) => unit.id === editingUnit.id);
+    if (updated) setEditingUnit(updated);
+  }, [planeUnits, editingUnit?.id]);
+  async function createTeam(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const response = await fetch('/api/plane/organization', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(form)) });
+    if (!response.ok) { window.alert('팀 생성에 실패했습니다.'); return; }
+    setIsTeamDialogOpen(false);
+    setPlaneUnits(null);
+    setPlaneUnits(null); setOrganizationRefresh((value) => value + 1);
+  }
+  const { nodes, edges } = React.useMemo(() => buildGraph(canvasUnits), [canvasUnits]);
 
   return (
     <div
-      className="w-full overflow-hidden rounded-[32px] border border-slate-200 bg-[#fcfcfd]"
-      style={{ height: 'clamp(520px, calc(100dvh - 240px), 860px)' }}
+      className="relative w-full overflow-hidden border-x-0 border-b-0 border-t border-slate-200 bg-[#fcfcfd]"
+      style={{ height: 'max(520px, calc(100dvh - 77px))' }}
     >
+      {planeError ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center p-6 text-center">
+          <div className="rounded-2xl border border-red-200 bg-white px-6 py-5 text-sm text-red-700 shadow-sm">
+            조직도 데이터를 불러오지 못했습니다.<br />
+            <span className="text-xs text-red-500">{planeError}</span>
+          </div>
+        </div>
+      ) : null}
+      {!planeUnits && !planeError ? (
+        <div className="absolute inset-0 z-10 overflow-hidden bg-[#fcfcfd] p-8 [background-image:radial-gradient(rgba(100,116,139,0.16)_2.5px,transparent_2.5px)] [background-size:56px_56px]">
+          <div className="mx-auto mb-16 h-4 w-48 animate-pulse rounded-full bg-slate-200" />
+          <div className="mx-auto grid max-w-6xl grid-cols-4 gap-10">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-64 animate-pulse rounded-[28px] border-2 border-slate-200 bg-white p-5">
+                <div className="mb-8 h-8 w-2/3 rounded-lg bg-slate-200" />
+                <div className="mx-auto h-16 w-48 rounded-2xl bg-slate-100" />
+                <div className="mt-8 grid grid-cols-2 gap-3"><div className="h-14 rounded-xl bg-slate-100" /><div className="h-14 rounded-xl bg-slate-100" /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <ReactFlow
+        key={planeUnits ? 'organization-loaded' : 'organization-loading'}
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
         fitView={false}
-        defaultViewport={{ x: 24, y: 24, zoom: 0.72 }}
+        // 운영진(조직도 최상위 팀)을 첫 화면의 상단 중앙에 배치한다.
+        defaultViewport={{ x: 0, y: 0, zoom: 0.3 }}
+        onInit={(instance) => {
+          const executive = nodes.find((node) => node.type === 'sheet' && node.data.name === '운영진');
+          if (!executive) return;
+          const width = Number(executive.style?.width ?? SHEET_WIDTH);
+          const canvasWidth = document.querySelector('.react-flow')?.clientWidth ?? window.innerWidth;
+          const xBounds = nodes.reduce((bounds, node) => ({ min: Math.min(bounds.min, node.position.x), max: Math.max(bounds.max, node.position.x + Number(node.style?.width ?? SHEET_WIDTH)) }), { min: Infinity, max: -Infinity });
+          instance.setViewport({
+            x: canvasWidth / 2 - ((xBounds.min + xBounds.max) / 2) * 0.6,
+            y: 104 - executive.position.y * 0.6,
+            zoom: 0.6,
+          });
+        }}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
+        onNodeClick={(_, node) => { const unit = canvasUnits.find((item) => node.id === item.id || node.id.startsWith(`${item.id}-`) || item.people.some((person) => person.id === node.id)); if (unit) { setIsTeamDirty(false); setDraftMembers((drafts) => ({ ...drafts, [unit.id]: drafts[unit.id] ?? unit.people })); setEditingUnit(unit); } }}
+        onNodeMouseEnter={(_, node) => { const unit = renderedUnits.find((item) => node.id === item.id || node.id.startsWith(`${item.id}-`) || item.people.some((person) => person.id === node.id)); if (unit) { const el = document.querySelector(`[data-id="${unit.id}"] > div`) as HTMLElement | null; if (el) { el.style.borderColor = 'rgb(148 163 184)'; el.style.boxShadow = '0 20px 35px rgba(15,23,42,.12)'; } } }}
+        onNodeMouseLeave={(_, node) => { const unit = renderedUnits.find((item) => node.id === item.id || node.id.startsWith(`${item.id}-`) || item.people.some((person) => person.id === node.id)); if (unit) { const el = document.querySelector(`[data-id="${unit.id}"] > div`) as HTMLElement | null; if (el) { el.style.borderColor = ''; el.style.boxShadow = ''; } } }}
         panOnDrag
         zoomOnScroll
         zoomOnDoubleClick
-        minZoom={0.5}
+        minZoom={0.3}
         maxZoom={1.4}
       >
-        <Background gap={24} size={1} color="rgba(148, 163, 184, 0.08)" />
+        <Background variant="dots" gap={56} size={5} color="rgba(100, 116, 139, 0.16)" />
+        <Panel position="top-left" className="!mt-8 !mb-4 !left-1/2 !right-auto !w-full !max-w-7xl !-translate-x-1/2 !px-2 lg:!px-4">
+          <button
+            type="button"
+            onClick={() => setIsTeamDialogOpen(true)}
+            className="inline-flex h-9 w-28 items-center justify-center whitespace-nowrap animate-pulse-ring gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          >
+            <Plus className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+            팀 추가
+          </button>
+        </Panel>
       </ReactFlow>
+      {editingUnit ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/20 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); } }}>
+          <form className="flex w-full max-w-2xl min-h-[620px] max-h-[90vh] flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onChange={() => setIsTeamDirty(true)} onSubmit={async (event) => { event.preventDefault(); if (isOrganizationSaving) return; setIsOrganizationSaving(true); const form = new FormData(event.currentTarget); const original = editingUnit.people; const draft = draftMembers[editingUnit.id] ?? original; const members = [...draft.map((member) => ({ id: member.id, name: member.name, title: member.title, gender: member.gender, action: member.id.startsWith('draft-') ? 'create' : 'update' })), ...original.filter((member) => !draft.some((next) => next.id === member.id)).map((member) => ({ id: member.id, action: 'delete' }))]; const response = await fetch('/api/plane/organization', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId: editingUnit.id, name: form.get('name'), leadMemberId: form.get('leadMemberId'), members }) }); if (!response.ok) { const detail = await response.json().catch(() => ({})); window.alert(detail.error ?? '팀 저장에 실패했습니다.'); setIsOrganizationSaving(false); return; } setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); setIsOrganizationSaving(false); }}>
+            <div className="mb-6"><h2 className="text-lg font-bold text-slate-900">팀 편집</h2></div>
+            <div className="space-y-4"><label className="block text-sm font-medium text-slate-700">팀 이름<input name="name" defaultValue={editingUnit.name} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" /></label>{editingUnit.name !== '운영진' ? <label className="block text-sm font-medium text-slate-700">팀장<select name="leadMemberId" defaultValue={editingUnit.leadMemberId ?? ''} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="">팀장을 선택하세요</option>{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <option key={person.id} value={person.id}>{person.name} · {person.title}</option>)}</select></label> : null}<div><div className="mb-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-800">팀원 ({(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).length})</p><button type="button" onClick={() => setIsMemberDialogOpen(true)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200">+ 팀원 추가</button></div><div className="max-h-80 space-y-2 overflow-y-auto">{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <div key={person.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"><div><p className="text-sm font-medium text-slate-800">{person.name}</p><p className="text-xs text-slate-500">{person.title}</p></div><div className="flex items-center gap-1"><button type="button" aria-label={`${person.name} 편집`} title="편집" onClick={() => setEditingMember(person)} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"><Pencil size={14} aria-hidden="true" /></button><button type="button" aria-label={`${person.name} 삭제`} title="삭제" onClick={() => { if (!window.confirm(`${person.name} 구성원을 삭제할까요?`)) return; setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: (drafts[editingUnit.id] ?? editingUnit.people).filter((member) => member.id !== person.id) })); setIsTeamDirty(true); }} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-red-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} aria-hidden="true" /></button></div></div>)}</div></div></div>
+            <div className="mt-auto pt-6 flex items-center justify-between gap-2"><button type="button" onClick={async () => { if (!window.confirm(`${editingUnit.name} 팀을 삭제할까요? 팀원과 연결된 데이터가 정리됩니다.`)) return; const response = await fetch(`/api/plane/organization?id=${encodeURIComponent(editingUnit.id)}`, { method: 'DELETE' }); if (!response.ok) { const detail = await response.text(); window.alert(`팀 삭제에 실패했습니다.\n${detail}`); return; } setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50">팀 삭제</button><div className="flex gap-2"><button type="button" onClick={() => { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); }} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" disabled={!isTeamDirty || isOrganizationSaving} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">저장</button></div></div>
+          </form>
+        </div>
+      ) : null}
+      {editingMember ? (<div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/20 p-4"><form className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); if (editingUnit) setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: (drafts[editingUnit.id] ?? editingUnit.people).map((member) => member.id === editingMember.id ? { ...member, name: String(form.get('name')), title: String(form.get('title')), gender: form.get('gender') as 'male' | 'female' } : member) })); setEditingMember(null); setIsTeamDirty(true); }}><h2 className="text-lg font-bold">구성원 편집</h2><div className="mt-5 space-y-4"><label className="block text-sm font-medium">이름<input required name="name" defaultValue={editingMember.name} className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">직책<input required name="title" defaultValue={editingMember.title} className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">성별<select name="gender" defaultValue={editingMember.gender} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="male">남성</option><option value="female">여성</option></select></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setEditingMember(null)} className="rounded-xl px-4 py-2.5">취소</button><button className="rounded-xl bg-slate-900 px-4 py-2.5 font-semibold text-white">변경</button></div></form></div>) : null}
+      {isMemberDialogOpen && editingUnit ? (<div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/20 p-4"><form className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); const member: OrgMember = { id: `draft-${crypto.randomUUID()}`, name: String(form.get('name')), title: String(form.get('title')), gender: form.get('gender') as 'male' | 'female', orgUnitId: editingUnit.id, reportsToMemberId: editingUnit.leadMemberId }; setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: [...(drafts[editingUnit.id] ?? editingUnit.people), member] })); setIsMemberDialogOpen(false); setIsTeamDirty(true); }}><h2 className="text-lg font-bold text-slate-900">팀원 추가</h2><div className="mt-5 space-y-4"><label className="block text-sm font-medium">이름<input required name="name" placeholder="예: 홍길동" className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">직책<input required name="title" placeholder="예: Backend" className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">성별<select required name="gender" defaultValue="" className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="" disabled>선택하세요</option><option value="male">남성</option><option value="female">여성</option></select></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setIsMemberDialogOpen(false)} className="rounded-xl px-4 py-2.5">취소</button><button className="rounded-xl bg-slate-900 px-4 py-2.5 font-semibold text-white">추가</button></div></form></div>) : null}
+      {isTeamDialogOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/20 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setIsTeamDialogOpen(false); }}>
+          <form className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onSubmit={createTeam}>
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">팀 추가</h2>
+              </div>
+              <button type="button" onClick={() => setIsTeamDialogOpen(false)} className="text-xl text-slate-400 hover:text-slate-700" aria-label="닫기">×</button>
+            </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-slate-700">팀 이름 *<input required name="name" className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 outline-none focus:border-slate-500" placeholder="예: 고객지원팀" /></label>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-3 text-sm font-semibold text-slate-800">팀장 정보</p>
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">이름 *<input required name="leadName" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-slate-500" placeholder="예: 홍길동" /></label>
+                  <label className="block text-sm font-medium text-slate-700">직책 *<input required name="leadTitle" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-slate-500" placeholder="예: Backend" /></label>
+                  <label className="block text-sm font-medium text-slate-700">성별 *<select required name="leadGender" defaultValue="" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-slate-500"><option value="" disabled>선택하세요</option><option value="male">남성</option><option value="female">여성</option></select></label>
+                </div>
+              </div>
+              <label className="block text-sm font-medium text-slate-700">상위 팀<select name="parentTeamId" defaultValue={planeUnits?.find((unit) => unit.parentId === null)?.id ?? ''} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none focus:border-slate-500">{planeUnits?.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</select></label>
+            </div>
+            <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setIsTeamDialogOpen(false)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700">팀 생성</button></div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }

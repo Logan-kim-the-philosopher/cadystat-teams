@@ -51,7 +51,7 @@
 - `title`: 제목
 - `description`: 설명
 - `type`: `bug | feature | request`
-- `status`: `new | triaged | claimed | in_progress | blocked | done | closed`
+- `status`: `신규 | 배정 | 완료`
 - `priority`: `low | medium | high | urgent`
 - `source`: `form | email | manual | import`
 - `ownerTeamId`: 현재 담당 팀
@@ -91,18 +91,10 @@
 ### 필드
 - `id`: 고유 식별자
 - `title`: 회의 제목
-- `date`: 회의 일자
-- `meetingType`: `all-hands`
-- `attendeeIds`: 참석자 ID 배열
-- `agenda`: 안건 배열
-- `discussion`: 논의 내용
-- `decisions`: 결정사항 배열
-- `actionItems`: 후속 조치 배열
+- `meetingDate`: 회의 일자
+- `content`: 회의록 본문
+- `status`: `draft | published | archived`
 - `linkedTicketIds`: 연결된 티켓 ID 배열
-- `comments`: 댓글 배열
-- `visibility`: `workspace | private`
-- `createdAt`: 생성 시각
-- `updatedAt`: 수정 시각
 
 ### comments 예시
 - `id`
@@ -140,6 +132,7 @@
 - `Team` → `User` 다대다
 - `Ticket` → `Team` 단일 현재 담당 + 이력
 - `Ticket` → `MeetingNote` 다대다
+  - DB 연결 테이블: `meeting_note_tickets(meeting_slug, ticket_id)`
 - `MeetingNote` → `Comment` 일대다
 - `Ticket` → `Comment` 일대다
 

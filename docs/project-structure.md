@@ -1,12 +1,12 @@
 # 프로젝트 구조
 
 ## 목표
-이 프로젝트는 Plane 기반 협업 포털을 만들기 위한 기획 저장소입니다.
+이 프로젝트는 Plane 기반 중앙조직 운영 포털을 만들기 위한 기획 저장소입니다.
 초기에는 문서 중심으로 유지하고, 이후 Astro 구현으로 확장합니다.
 
 ## 권장 디렉토리 구조
 ```text
-cody-stat/
+Codystat-Teams/
 ├─ README.md
 ├─ docs/
 │  ├─ screen-design.md

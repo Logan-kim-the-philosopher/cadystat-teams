@@ -50,12 +50,12 @@ const fullBleed = props.fullBleed ?? false;
     </div>
     <script>
       // Warm the organization cache from every page so /organization does not
-      // pay the Plane API latency when the user eventually opens it.
+      // pay the Supabase latency when the user eventually opens it.
       const key = 'codystat:organization-prefetch-at';
       const lastPrefetch = Number(sessionStorage.getItem(key) ?? '0');
       if (Date.now() - lastPrefetch > 30_000) {
         sessionStorage.setItem(key, String(Date.now()));
-        void fetch('/api/plane/organization', { credentials: 'same-origin' }).catch(() => {
+        void fetch('/api/organization', { credentials: 'same-origin' }).catch(() => {
           sessionStorage.removeItem(key);
         });
       }

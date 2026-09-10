@@ -430,15 +430,15 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
 
   React.useEffect(() => {
     let active = true;
-    fetch(`/api/plane/organization?refresh=${Date.now()}`)
+    fetch(`/api/organization?refresh=${Date.now()}`)
       .then(async (response) => {
         const payload = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(payload?.error ?? `Plane API 오류 (${response.status})`);
+        if (!response.ok) throw new Error(payload?.error ?? `Supabase 오류 (${response.status})`);
         return payload;
       })
       .then((payload) => {
         if (!active) return;
-        if (!payload?.members) throw new Error('Plane 조직도 응답에 members가 없습니다.');
+        if (!payload?.members) throw new Error('조직도 응답에 members가 없습니다.');
         setPlaneError(null);
         const projectSlugById: Record<string, string> = {
           'f74a3d41-b751-47c7-9e7e-dccb6fdd1376': 'executive',
@@ -479,7 +479,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
       })
       .catch((error: unknown) => {
         if (active) {
-          setPlaneError(error instanceof Error ? error.message : 'Plane 조직도 조회에 실패했습니다.');
+          setPlaneError(error instanceof Error ? error.message : '조직도 조회에 실패했습니다.');
           setPlaneUnits(null);
         }
       });
@@ -491,7 +491,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
   }, [units, organizationRefresh]);
 
   // Do not render the static fallback before Plane responds; otherwise the
-  // mock team name briefly flashes before the Plane name replaces it.
+  // mock team name briefly flashes before the 조직 데이터 replaces it.
   const canvasUnits = planeUnits ?? [];
   const renderedUnits = (planeUnits ?? []).map((unit) => ({
     ...unit,
@@ -506,7 +506,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
   async function createTeam(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/plane/organization', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(form)) });
+    const response = await fetch('/api/organization', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(form)) });
     if (!response.ok) { window.alert('팀 생성에 실패했습니다.'); return; }
     setIsTeamDialogOpen(false);
     setPlaneUnits(null);
@@ -587,10 +587,10 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
       </ReactFlow>
       {editingUnit ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/20 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); } }}>
-          <form className="flex w-full max-w-2xl min-h-[620px] max-h-[90vh] flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onChange={() => setIsTeamDirty(true)} onSubmit={async (event) => { event.preventDefault(); if (isOrganizationSaving) return; setIsOrganizationSaving(true); const form = new FormData(event.currentTarget); const original = editingUnit.people; const draft = draftMembers[editingUnit.id] ?? original; const members = [...draft.map((member) => ({ id: member.id, name: member.name, title: member.title, gender: member.gender, action: member.id.startsWith('draft-') ? 'create' : 'update' })), ...original.filter((member) => !draft.some((next) => next.id === member.id)).map((member) => ({ id: member.id, action: 'delete' }))]; const response = await fetch('/api/plane/organization', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId: editingUnit.id, name: form.get('name'), leadMemberId: form.get('leadMemberId'), members }) }); if (!response.ok) { const detail = await response.json().catch(() => ({})); window.alert(detail.error ?? '팀 저장에 실패했습니다.'); setIsOrganizationSaving(false); return; } setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); setIsOrganizationSaving(false); }}>
+          <form className="flex w-full max-w-2xl min-h-[620px] max-h-[90vh] flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onChange={() => setIsTeamDirty(true)} onSubmit={async (event) => { event.preventDefault(); if (isOrganizationSaving) return; setIsOrganizationSaving(true); const form = new FormData(event.currentTarget); const original = editingUnit.people; const draft = draftMembers[editingUnit.id] ?? original; const members = [...draft.map((member) => ({ id: member.id, name: member.name, title: member.title, gender: member.gender, action: member.id.startsWith('draft-') ? 'create' : 'update' })), ...original.filter((member) => !draft.some((next) => next.id === member.id)).map((member) => ({ id: member.id, action: 'delete' }))]; const response = await fetch('/api/organization', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId: editingUnit.id, name: form.get('name'), leadMemberId: form.get('leadMemberId'), members }) }); if (!response.ok) { const detail = await response.json().catch(() => ({})); window.alert(detail.error ?? '팀 저장에 실패했습니다.'); setIsOrganizationSaving(false); return; } setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); setIsOrganizationSaving(false); }}>
             <div className="mb-6"><h2 className="text-lg font-bold text-slate-900">팀 편집</h2></div>
             <div className="space-y-4"><label className="block text-sm font-medium text-slate-700">팀 이름<input name="name" defaultValue={editingUnit.name} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" /></label>{editingUnit.name !== '운영진' ? <label className="block text-sm font-medium text-slate-700">팀장<select name="leadMemberId" defaultValue={editingUnit.leadMemberId ?? ''} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="">팀장을 선택하세요</option>{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <option key={person.id} value={person.id}>{person.name} · {person.title}</option>)}</select></label> : null}<div><div className="mb-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-800">팀원 ({(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).length})</p><button type="button" onClick={() => setIsMemberDialogOpen(true)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200">+ 팀원 추가</button></div><div className="max-h-80 space-y-2 overflow-y-auto">{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <div key={person.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"><div><p className="text-sm font-medium text-slate-800">{person.name}</p><p className="text-xs text-slate-500">{person.title}</p></div><div className="flex items-center gap-1"><button type="button" aria-label={`${person.name} 편집`} title="편집" onClick={() => setEditingMember(person)} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"><Pencil size={14} aria-hidden="true" /></button><button type="button" aria-label={`${person.name} 삭제`} title="삭제" onClick={() => { if (!window.confirm(`${person.name} 구성원을 삭제할까요?`)) return; setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: (drafts[editingUnit.id] ?? editingUnit.people).filter((member) => member.id !== person.id) })); setIsTeamDirty(true); }} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-red-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} aria-hidden="true" /></button></div></div>)}</div></div></div>
-            <div className="mt-auto pt-6 flex items-center justify-between gap-2"><button type="button" onClick={async () => { if (!window.confirm(`${editingUnit.name} 팀을 삭제할까요? 팀원과 연결된 데이터가 정리됩니다.`)) return; const response = await fetch(`/api/plane/organization?id=${encodeURIComponent(editingUnit.id)}`, { method: 'DELETE' }); if (!response.ok) { const detail = await response.text(); window.alert(`팀 삭제에 실패했습니다.\n${detail}`); return; } setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50">팀 삭제</button><div className="flex gap-2"><button type="button" onClick={() => { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); }} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" disabled={!isTeamDirty || isOrganizationSaving} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">저장</button></div></div>
+            <div className="mt-auto pt-6 flex items-center justify-between gap-2"><button type="button" onClick={async () => { if (!window.confirm(`${editingUnit.name} 팀을 삭제할까요? 팀원과 연결된 데이터가 정리됩니다.`)) return; const response = await fetch(`/api/organization?id=${encodeURIComponent(editingUnit.id)}`, { method: 'DELETE' }); if (!response.ok) { const detail = await response.text(); window.alert(`팀 삭제에 실패했습니다.\n${detail}`); return; } setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50">팀 삭제</button><div className="flex gap-2"><button type="button" onClick={() => { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); }} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" disabled={!isTeamDirty || isOrganizationSaving} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">저장</button></div></div>
           </form>
         </div>
       ) : null}

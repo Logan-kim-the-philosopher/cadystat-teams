@@ -8,7 +8,6 @@
 - **React islands**: 티켓 보드, 조직도 등 상호작용 UI
 - **Tailwind CSS + shadcn 스타일 컴포넌트**: 일관된 UI
 - **Supabase/Postgres**: 티켓, 조직, 회의록 데이터 저장
-- **Plane API**: 조직 및 프로젝트 연동 API
 
 ## 실행
 
@@ -88,9 +87,7 @@ public/                   # 정적 이미지 및 아바타
 - `GET/POST /api/ticket-comments`
 - `GET/POST /api/meeting-comments`
 - `GET/POST /api/meetings`
-- `GET /api/plane/organization`
-- `GET /api/plane/projects`
-- `GET /api/plane/teams`
+- `GET /api/organization`
 - `GET/POST /api/organization/members`
 
 티켓 상태는 `신규`, `배정`, `완료`를 사용하며, 데이터베이스의 유형·상태·팀 ID와 연결됩니다.
@@ -101,5 +98,4 @@ public/                   # 정적 이미지 및 아바타
 - [데이터 모델](docs/data-model.md)
 - [프로젝트 구조](docs/project-structure.md)
 - [조직도 데이터 스키마](docs/organization-schema.md)
-- [Plane 기능 분해](docs/plane-feature-split.md)
 - [구현 로드맵](docs/implementation-roadmap.md)

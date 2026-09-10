@@ -30,10 +30,10 @@ export const PATCH: APIRoute = async ({ request }) => {
       organizationCache = null;
       return Response.json({ ok: true });
     }
-    const lookup = await fetch(`${url}/rest/v1/teams?plane_project_id=eq.${encodeURIComponent(body.teamId)}&select=id`, { headers }); const found = (await lookup.json())[0];
+    const lookup = await fetch(`${url}/rest/v1/teams?id=eq.${encodeURIComponent(body.teamId)}&select=id`, { headers }); const found = (await lookup.json())[0];
     if (!found) return Response.json({ error: '팀을 찾을 수 없습니다.' }, { status: 404 });
     let leadMemberId = undefined;
-    if (Object.prototype.hasOwnProperty.call(body, 'leadMemberId')) { if (!body.leadMemberId) { leadMemberId = null; } else { const leadLookup = await fetch(`${url}/rest/v1/members?or=(id.eq.${encodeURIComponent(body.leadMemberId)},plane_work_item_id.eq.${encodeURIComponent(body.leadMemberId)})&select=id,team_id`, { headers }); const candidate = (await leadLookup.json())[0]; if (!candidate || candidate.team_id !== found.id) return Response.json({ error: '팀장으로 지정할 구성원은 해당 팀 소속이어야 합니다.' }, { status: 400 }); leadMemberId = candidate.id; } }
+    if (Object.prototype.hasOwnProperty.call(body, 'leadMemberId')) { if (!body.leadMemberId) { leadMemberId = null; } else { const leadLookup = await fetch(`${url}/rest/v1/members?or=(id.eq.${encodeURIComponent(body.leadMemberId)},id.eq.${encodeURIComponent(body.leadMemberId)})&select=id,team_id`, { headers }); const candidate = (await leadLookup.json())[0]; if (!candidate || candidate.team_id !== found.id) return Response.json({ error: '팀장으로 지정할 구성원은 해당 팀 소속이어야 합니다.' }, { status: 400 }); leadMemberId = candidate.id; } }
     if (body.name === '운영진') leadMemberId = null;
     const response = await fetch(`${url}/rest/v1/teams?id=eq.${found.id}`, { method: 'PATCH', headers, body: JSON.stringify({ name: body.name, ...(Object.prototype.hasOwnProperty.call(body, 'leadMemberId') ? { lead_member_id: leadMemberId } : {}) }) });
     if (leadMemberId) {
@@ -51,7 +51,7 @@ export const DELETE: APIRoute = async ({ request }) => {
     const teamId = new URL(request.url).searchParams.get('id'); const url = (env('CODY_STAT_SUPABASE_URL') ?? '').replace(/\/rest\/v1\/?$/, ''); const key = env('CODY_STAT_SUPABASE_SERVICE_ROLE_KEY');
     if (!url || !key || !teamId) return Response.json({ error: '팀 ID가 필요합니다.' }, { status: 400 });
     const headers = { apikey: key!, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
-    const lookup = await fetch(`${url}/rest/v1/teams?or=(id.eq.${encodeURIComponent(teamId)},plane_project_id.eq.${encodeURIComponent(teamId)})&select=id`, { headers }); const team = (await lookup.json())[0];
+    const lookup = await fetch(`${url}/rest/v1/teams?or=(id.eq.${encodeURIComponent(teamId)},id.eq.${encodeURIComponent(teamId)})&select=id`, { headers }); const team = (await lookup.json())[0];
     if (!team) return Response.json({ error: '팀을 찾을 수 없습니다.' }, { status: 404 });
     await fetch(`${url}/rest/v1/teams?id=eq.${team.id}`, { method: 'PATCH', headers, body: JSON.stringify({ lead_member_id: null }) });
     const childTeams = await fetch(`${url}/rest/v1/teams?parent_team_id=eq.${team.id}&select=id`, { headers }); if ((await childTeams.json()).length) return Response.json({ error: '하위 팀이 있는 팀은 삭제할 수 없습니다.' }, { status: 409 });
@@ -77,14 +77,14 @@ export const POST: APIRoute = async ({ request }) => {
       if ((await duplicateResponse.json()).length > 0) return Response.json({ error: '이미 같은 이름의 팀이 있습니다.' }, { status: 409 });
       let parentTeamId = null;
       if (body.parentTeamId) {
-        const parentResponse = await fetch(`${url}/rest/v1/teams?plane_project_id=eq.${encodeURIComponent(body.parentTeamId)}&select=id`, { headers });
+        const parentResponse = await fetch(`${url}/rest/v1/teams?id=eq.${encodeURIComponent(body.parentTeamId)}&select=id`, { headers });
         const parents = await parentResponse.json();
         parentTeamId = parents[0]?.id ?? body.parentTeamId;
       }
-      const teamResponse = await fetch(`${url}/rest/v1/teams`, { method: 'POST', headers, body: JSON.stringify({ name: body.name, parent_team_id: parentTeamId, plane_project_id: crypto.randomUUID(), lead_member_id: null }) });
+      const teamResponse = await fetch(`${url}/rest/v1/teams`, { method: 'POST', headers, body: JSON.stringify({ name: body.name, parent_team_id: parentTeamId, id: crypto.randomUUID(), lead_member_id: null }) });
       if (!teamResponse.ok) return Response.json({ error: await teamResponse.text() }, { status: teamResponse.status });
       const team = (await teamResponse.json())[0];
-      const memberResponse = await fetch(`${url}/rest/v1/members`, { method: 'POST', headers, body: JSON.stringify({ name: body.leadName, title: body.leadTitle, gender: body.leadGender, team_id: team.id, reports_to: null, sort_order: 0, plane_work_item_id: crypto.randomUUID() }) });
+      const memberResponse = await fetch(`${url}/rest/v1/members`, { method: 'POST', headers, body: JSON.stringify({ name: body.leadName, title: body.leadTitle, gender: body.leadGender, team_id: team.id, reports_to: null, sort_order: 0, id: crypto.randomUUID() }) });
       if (!memberResponse.ok) { await fetch(`${url}/rest/v1/teams?id=eq.${team.id}`, { method: 'DELETE', headers }); return Response.json({ error: await memberResponse.text() }, { status: memberResponse.status }); }
       const member = (await memberResponse.json())[0];
       const leadLinkResponse = await fetch(`${url}/rest/v1/teams?id=eq.${team.id}`, { method: 'PATCH', headers, body: JSON.stringify({ lead_member_id: member.id }) });
@@ -93,11 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
       return Response.json({ ok: true, team, member }, { status: 201 });
     } catch (error) { return Response.json({ error: error instanceof Error ? error.message : '팀 생성 실패' }, { status: 400 }); }
   }
-  const expectedSecret = env('PLANE_WEBHOOK_SECRET');
-  const receivedSecret = request.headers.get('x-plane-webhook-secret') ?? request.headers.get('x-webhook-secret');
-  if (!expectedSecret || receivedSecret !== expectedSecret) return Response.json({ error: 'Invalid webhook secret' }, { status: 401 });
-  organizationCache = null;
-  return Response.json({ ok: true, invalidated: true });
+  return Response.json({ error: '지원하지 않는 요청입니다.' }, { status: 405 });
 };
 
 export const GET: APIRoute = async ({ url: requestUrl }) => {
@@ -107,12 +103,12 @@ export const GET: APIRoute = async ({ url: requestUrl }) => {
   }
   try {
     const [teams, members] = await Promise.all([
-      supabaseGet<Array<{ id: string; name: string; parent_team_id: string | null; lead_member_id: string | null; plane_project_id: string | null }>>('teams'),
-      supabaseGet<Array<{ id: string; name: string; title: string; gender: 'male' | 'female' | null; team_id: string; reports_to: string | null; sort_order: number; plane_work_item_id: string | null }>>('members'),
+      supabaseGet<Array<{ id: string; name: string; parent_team_id: string | null; lead_member_id: string | null }>>('teams'),
+      supabaseGet<Array<{ id: string; name: string; title: string; gender: 'male' | 'female' | null; team_id: string; reports_to: string | null; sort_order: number }>>('members'),
     ]);
     const result = {
-      teams: teams.map((team) => ({ id: team.plane_project_id ?? team.id, workItemId: team.id, name: team.name, parentTeamId: team.parent_team_id ? (teams.find((parent) => parent.id === team.parent_team_id)?.plane_project_id ?? team.parent_team_id) : null, leadMemberId: members.find((member) => member.id === team.lead_member_id)?.plane_work_item_id ?? team.lead_member_id })),
-      members: members.map((member) => ({ id: member.plane_work_item_id ?? member.id, name: member.name, title: member.title, gender: member.gender, teamProjectId: teams.find((team) => team.id === member.team_id)?.plane_project_id ?? member.team_id, reportsTo: members.find((parent) => parent.id === member.reports_to)?.plane_work_item_id ?? member.reports_to, sortOrder: member.sort_order })),
+      teams: teams.map((team) => ({ id: team.id, workItemId: team.id, name: team.name, parentTeamId: team.parent_team_id ? (teams.find((parent) => parent.id === team.parent_team_id)?.id ?? team.parent_team_id) : null, leadMemberId: members.find((member) => member.id === team.lead_member_id)?.id ?? team.lead_member_id })),
+      members: members.map((member) => ({ id: member.id, name: member.name, title: member.title, gender: member.gender, teamProjectId: teams.find((team) => team.id === member.team_id)?.id ?? member.team_id, reportsTo: members.find((parent) => parent.id === member.reports_to)?.id ?? member.reports_to, sortOrder: member.sort_order })),
     };
     const body = JSON.stringify(result);
     organizationCache = { body, expiresAt: Date.now() + 30_000 };

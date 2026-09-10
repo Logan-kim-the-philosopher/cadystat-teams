@@ -7,10 +7,17 @@ function formatDate(value: string | null) {
   return `다음 회의: ${new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value))}`;
 }
 
+function toLocalInput(value: string | null) {
+  if (!value) return '';
+  const date = new Date(value);
+  const pad = (part: number) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function NextMeetingBadge({ initialValue }: { initialValue: string | null }) {
   const [value, setValue] = React.useState(initialValue);
   const [open, setOpen] = React.useState(false);
-  const [input, setInput] = React.useState(initialValue ? initialValue.slice(0, 16) : '');
+  const [input, setInput] = React.useState(toLocalInput(initialValue));
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
   const [calendarOpen, setCalendarOpen] = React.useState(false);
@@ -41,7 +48,7 @@ export default function NextMeetingBadge({ initialValue }: { initialValue: strin
   };
 
   return <>
-    <button type="button" onClick={() => { setInput(value ? value.slice(0, 16) : ''); setOpen(true); }} className="w-fit rounded-full border border-white/20 px-3 py-1 text-sm text-slate-300 transition hover:border-white/40 hover:bg-white/10">{formatDate(value)}</button>
+    <button type="button" onClick={() => { setInput(toLocalInput(value)); setOpen(true); }} className="w-fit rounded-full border border-white/20 px-3 py-1 text-sm text-slate-300 transition hover:border-white/40 hover:bg-white/10">{formatDate(value)}</button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="overflow-visible">
         <DialogTitle>다음 회의 일정</DialogTitle>

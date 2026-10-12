@@ -1,0 +1,38 @@
+---
+import TeamsLayout from '../../../layouts/TeamsLayout.astro';
+import { Badge } from '../../../components/ui/badge';
+import { MeetingBrowser, meetingStatusLabel } from '../../../features/teams/components/meeting-browser';
+import { MeetingComments } from '../../../features/teams/components/meeting-comments';
+import { MeetingEditorialThumbnail } from '../../../features/teams/components/meeting-editorial-thumbnail';
+import { listMeetings } from '../../../features/teams/server/meeting-repository';
+import { renderMarkdown } from '../../../features/teams/server/markdown.mjs';
+
+let workspace = null;
+let failed = false;
+try { workspace = await listMeetings(); } catch (error) { failed = true; console.error('[teams/meetings/detail]', error); }
+const note = workspace?.notes.find((item) => item.id === Astro.params.id);
+if (!note) Astro.response.status = failed ? 503 : 404;
+---
+
+<TeamsLayout title={note ? `${note.title} · Codystat-Teams` : '회의록 없음 · Codystat-Teams'} description="Teams 회의록 상세">
+  {note && workspace ? (
+    <article class="mx-auto max-w-4xl pb-16">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <a href="/teams/meetings" class="text-base font-medium text-muted-foreground transition hover:text-foreground">← 뒤로가기</a>
+        <nav aria-label="breadcrumb" class="hidden items-center gap-2 text-sm text-muted-foreground sm:flex"><a href="/teams" class="hover:text-foreground">Teams</a><span>/</span><a href="/teams/meetings" class="hover:text-foreground">회의록</a><span>/</span><span class="max-w-48 truncate text-foreground">{note.title}</span></nav>
+      </div>
+      <header class="mt-4 border-b border-border pb-8">
+        <div class="flex flex-wrap items-start justify-between gap-4"><div><h1 class="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{note.title}</h1><div class="mt-5 flex flex-wrap items-center gap-2"><Badge variant="outline">{note.date}</Badge><Badge variant="outline">{meetingStatusLabel[note.status]}</Badge><Badge variant="outline">댓글 {note.comments.length}</Badge></div></div><MeetingBrowser client:load workspace={workspace} editing={note} /></div>
+      </header>
+      <div class="mt-8"><MeetingEditorialThumbnail title={note.title} date={note.date} compact /></div>
+      <div class="rich-text mt-10" data-meeting-markdown set:html={renderMarkdown(note.content)} />
+      {note.tickets.length > 0 ? <section class="mt-12" aria-labelledby="linked-tickets-title"><div class="mb-4 flex items-center justify-between gap-3"><h2 id="linked-tickets-title" class="text-xl font-semibold tracking-tight">연결된 티켓</h2><span class="text-sm text-muted-foreground">{note.tickets.length}개</span></div><div class="grid gap-3 sm:grid-cols-2">{note.tickets.map((ticket) => <a href={`/teams/tickets/${ticket.number}`} class="group rounded-xl border border-border p-4 transition hover:border-primary/50 hover:bg-muted/40"><span class="text-sm font-semibold text-primary">{ticket.number}</span><h3 class="mt-2 font-medium leading-6 transition group-hover:text-primary">{ticket.title}</h3></a>)}</div></section> : null}
+      <section class="mt-12 rounded-2xl border border-border bg-card p-6 shadow-soft" aria-label="회의 댓글"><MeetingComments client:load id={note.id} initialComments={note.comments} /></section>
+    </article>
+  ) : <div role="alert" class="rounded-2xl border border-border bg-card p-7"><h1 class="text-xl font-semibold">{failed ? '회의록 데이터 연결 실패' : '회의록을 찾을 수 없음'}</h1><p class="mt-2 text-sm text-muted-foreground">{failed ? '잠시 후 다시 시도해 주세요.' : '요청한 회의록이 존재하지 않습니다.'}</p></div>}
+</TeamsLayout>
+
+<script>
+  import { renderMeetingDiagrams } from '../../../features/teams/client/meeting-diagrams';
+  void renderMeetingDiagrams();
+</script>

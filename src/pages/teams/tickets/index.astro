@@ -1,0 +1,28 @@
+---
+import { TicketBoard } from '../../../features/teams/components/ticket-board';
+import type { TicketWorkspace } from '../../../features/teams/domain/tickets';
+import { listTickets } from '../../../features/teams/server/ticket-repository';
+import TeamsLayout from '../../../layouts/TeamsLayout.astro';
+
+let workspace: TicketWorkspace | null = null;
+try {
+  workspace = await listTickets();
+} catch (error) {
+  Astro.response.status = 503;
+  console.error('[teams/tickets] failed to render ticket board', error);
+}
+---
+
+<TeamsLayout title="티켓 · Codystat-Teams" description="Teams 내부 티켓 접수와 상태 관리">
+  <section>
+    <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Teams / Tickets</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-tight">티켓</h1>
+        <p class="mt-2 text-sm leading-7 text-muted-foreground">접수부터 팀 배정, 완료와 의견 기록까지 한 흐름으로 관리합니다.</p>
+      </div>
+      <span class="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">함께 편집</span>
+    </div>
+    {workspace ? <TicketBoard client:load initialWorkspace={workspace} /> : <div role="alert" class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">티켓 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>}
+  </section>
+</TeamsLayout>

@@ -1,102 +1,84 @@
 # Codystat-Teams
 
-조직도, 티켓, 회의록과 댓글을 관리하는 중앙 조직 운영 포털입니다.
-Astro 서버와 React islands, Tailwind CSS를 사용하며 모든 데이터는 로컬 SQLite 파일에 저장합니다.
+조직도, 티켓, 회의록과 외부 agent API를 제공하는 독립 Teams 서비스입니다. 희성님이 애플리케이션과 Teams 데이터 변경을 관리하고 Cody Stat 플랫폼은 배포·도메인·Gateway 라우팅을 제공합니다.
 
-## 실행
+## 기능
 
-Node.js **22.18 이상**이 필요합니다. 별도 DB 서버나 Supabase 키는 필요하지 않습니다.
+- 조직·팀·구성원 조회와 편집
+- 티켓 생성, 배정, 상태 이동, 댓글과 변경 이력
+- Markdown·Mermaid 회의록 조회, 생성, 수정, soft delete와 댓글
+- 회의록에서 새 티켓 생성 및 기존 티켓 연결
+- `/api/teams/*` 브라우저 API
+- `/api/v1/*` 외부·agent API의 key 역할, idempotency와 rate limit
+
+`/`는 `/teams/meetings`로 이동합니다. 주요 화면은 다음과 같습니다.
+
+- `/teams/meetings`
+- `/teams/tickets`
+- `/teams/organization`
+
+## 로컬 실행
+
+Node.js 22.18 이상과 Teams migration이 적용된 Supabase가 필요합니다.
 
 ```bash
 npm ci
-npm run db:seed
+cp .env.example .env
 npm run dev
 ```
 
-기본 주소는 `http://localhost:4321`입니다. `/`는 `/meetings`로 이동합니다.
-`npm run db:seed`를 생략해도 첫 데이터 조회 시 DB와 테스트 데이터가 자동 생성됩니다.
-
-## SQLite와 테스트 데이터
-
-기본 DB는 `data/codystat.sqlite`입니다. DB 파일과 WAL 파일은 Git에서 제외됩니다.
-데이터는 파일에 저장되므로 서버를 재시작해도 편집·추가·삭제 내용이 유지됩니다.
-시드는 DB당 한 번만 적용되며 다시 실행해도 기존 데이터를 덮어쓰거나 삭제한 예제를 복원하지 않습니다.
-
-| 데이터 | 개수 |
-|---|---:|
-| 팀 | 4 |
-| 구성원 | 10 |
-| 티켓 | 18 (신규·배정·완료 각 6) |
-| 티켓 이력 | 36 |
-| 티켓 댓글 | 36 |
-| 회의록 | 8 |
-| 회의록 댓글 | 16 |
-| 회의록–티켓 연결 | 19 |
-
-기존 예제 조직·티켓·회의록을 포함하고, 추가 테스트 시나리오를 함께 제공합니다.
-티켓 유형 2개와 상태 3개도 초기화합니다.
-
-선택적으로 `.env.example`을 `.env`에 복사해 다음을 설정할 수 있습니다.
+서버 전용 환경 변수:
 
 ```dotenv
-SQLITE_PATH=./data/codystat.sqlite
-SQLITE_SEED=1
+CODY_STAT_SUPABASE_URL=
+CODY_STAT_SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-- `SQLITE_PATH`: DB 파일 경로. 상대 경로는 실행 디렉터리를 기준으로 합니다.
-- `SQLITE_SEED=0`: 새 DB를 예제 데이터 없이 시작합니다. 유형·상태는 생성됩니다.
-- `npm run db:seed`: `SQLITE_SEED` 설정과 관계없이 아직 적용되지 않은 예제 시드를 적용합니다.
-- 새 예제로 다시 테스트하려면 `SQLITE_PATH`에 다른 파일 경로를 지정하세요.
+service-role 또는 secret key에 `PUBLIC_` 접두사를 붙이지 않습니다. 브라우저 bundle과 로그에 원문을 넣지 않습니다.
 
-## 프로젝트 구조
+`PUBLIC_CODY_STAT_HOME_URL`은 헤더의 “서비스” 링크가 돌아갈 Cody Stat Playground 주소입니다. 기본값은 `https://codystat.com/`입니다.
 
-```text
-src/
-├── components/app/       # 티켓 보드, 조직도, 댓글 UI
-├── components/ui/        # 공통 UI
-├── layouts/              # 사이트 레이아웃
-├── pages/                # 회의록, 티켓, 조직도 화면
-│   └── api/              # 서버 API
-├── lib/server/
-│   ├── schema.ts         # SQLite 스키마와 기본 유형·상태
-│   ├── database.ts       # DB 연결, 트랜잭션, 초기화
-│   ├── seed.ts           # 테스트 데이터
-│   ├── repository.ts     # 데이터 조회·저장과 업무 규칙
-│   └── http.ts           # API 요청 검증과 오류 응답
-├── lib/server-meetings.ts # 회의록 화면용 데이터 변환
-└── styles/
-scripts/seed.ts           # 반복 실행 가능한 시드 명령
-test/sqlite.test.ts      # 저장·무결성·재실행 테스트
-data/                   # 로컬 DB (Git 제외)
-docs/                   # 설계 및 실행 문서
-supabase/               # 이전 Supabase 스키마 자료 (현재 런타임에서 사용하지 않음)
-```
-
-## 주요 동작
-
-- 티켓 접수·편집·삭제, 팀 배정, 상태 변경, 댓글과 이력 저장
-- 담당 팀 없는 티켓의 배정 차단, 신규 상태로 되돌릴 때 팀·담당자 해제
-- 팀·구성원 편집을 하나의 트랜잭션으로 저장, 하위 팀이 있는 팀의 삭제 차단
-- 회의록 Markdown 렌더링, 실제 댓글 수, 관련 티켓 상세 모달 연결
-- 티켓 삭제 시 댓글·이력·회의록 연결 정리
-
-## API
-
-- `GET/POST/PATCH/DELETE /api/tickets`
-- `GET /api/ticket-comments?ticket_id=T-102`, `POST /api/ticket-comments`
-- `GET/POST /api/meeting-comments` (`GET`에 `slug`를 지정하면 해당 회의록 댓글 조회)
-- `GET/POST /api/meetings`
-- `GET/POST/PATCH/DELETE /api/organization`
-
-## 검증과 빌드
+## 검증
 
 ```bash
+npm run check
 npm test
-npx astro check
 npm run build
-node dist/server/entry.mjs
 ```
 
-테스트는 임시 DB를 사용하며 개발 DB를 수정하지 않습니다.
-배포 시에도 Node.js 22.18 이상과 쓰기 가능한 영속 디스크가 필요합니다.
-자세한 내용은 [아키텍처](docs/architecture.md), [실행·이식 가이드](docs/migration-guide.md)를 참고하세요.
+Supabase 로컬 환경이 준비된 경우 다음 통합 검증을 추가로 실행합니다.
+
+```bash
+npm run test:organization-api
+npm run test:ticket-api
+npm run test:meeting-api
+npm run test:meeting-upload
+npm run test:meeting-feedback
+npm run test:teams-admin
+```
+
+통합 테스트는 테스트 중 만든 레코드만 정리하며 운영 DB를 대상으로 실행하지 않습니다.
+
+## API 문서
+
+- [회의록 업로드 API](docs/guides/meeting-api-agent-guide.md)
+- [회의록 수정·삭제 API](docs/guides/meeting-mutation-api-agent-guide.md)
+- [Teams 관리자 API](docs/guides/teams-admin-api-agent-guide.md)
+
+API key 원문은 발급 시 한 번만 전달합니다. 현재 key 도구는 Admission 도입 전 계약을 보존하기 위한 것이며, 사람의 관리자 권한을 대신하지 않습니다.
+
+```bash
+npm run meeting-keys -- issue --name "개발자 이름" --days 30
+npm run meeting-keys -- list
+npm run meeting-keys -- set-role <키-ID> --role teams_admin
+npm run meeting-keys -- revoke <키-ID>
+```
+
+## 저장소 경계
+
+- 이 저장소: Teams UI, 도메인 로직, API, Teams migration과 테스트
+- Cody Stat: Playground 서비스 카드와 Teams 외부 링크
+- 플랫폼: 컨테이너 배포, secret 주입, `teams.codystat.com`과 Gateway
+- Admission: 사용자·조직·권한, 사용자 token과 개발자 API key
+
+`src/lib/server`의 SQLite 구현과 과거 Supabase migration은 이관 기준 보존을 위해 남아 있습니다. 운영 데이터 계보와 최소 권한 credential 정리는 다음 데이터 분리 단계에서 단일 경로로 확정합니다. 운영 DB에는 `reset`이나 예제 seed를 실행하지 않습니다.

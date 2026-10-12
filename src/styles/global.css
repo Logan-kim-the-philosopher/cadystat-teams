@@ -1,21 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(15 23 42 / 0.35); }
-  60% { box-shadow: 0 0 0 8px rgb(15 23 42 / 0); }
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.04), 0 18px 48px rgb(15 23 42 / 0.08);
 }
-
-.animate-pulse-ring { animation: pulse-ring 1.8s ease-out infinite; }
 
 :root {
   --background: 210 40% 98%;
   --foreground: 222.2 47.4% 11.2%;
   --card: 0 0% 100%;
   --card-foreground: 222.2 47.4% 11.2%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 47.4% 11.2%;
   --primary: 222.2 47.4% 11.2%;
   --primary-foreground: 210 40% 98%;
   --secondary: 210 40% 96.1%;
@@ -34,71 +42,66 @@ html {
 }
 
 body {
-  @apply bg-background text-foreground antialiased;
+  min-height: 100vh;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
   background-image:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.06), transparent 24%);
+    radial-gradient(circle at 12% 8%, rgb(37 99 235 / 0.1), transparent 28rem),
+    radial-gradient(circle at 88% 0%, rgb(14 165 233 / 0.08), transparent 24rem);
+  font-family:
+    Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
-  @apply border-border;
+  border-color: hsl(var(--border));
 }
 
 ::selection {
-  background: rgba(37, 99, 235, 0.18);
+  background: rgb(37 99 235 / 0.18);
 }
 
 @layer components {
-  .rich-text {
-    @apply text-base leading-8 text-muted-foreground;
+  .rich-text { line-height: 1.8; overflow-wrap: anywhere; }
+  .rich-text :is(h1,h2,h3,h4,h5,h6) { font-weight: 700; margin-block: 1.3em .5em; }
+  .rich-text h1 { font-size: 1.8rem; }
+  .rich-text h2 { font-size: 1.4rem; }
+  .rich-text :is(p,ul,ol,pre,blockquote,table) { margin-block: 1em; }
+  .rich-text ul { list-style: disc; padding-left: 1.5rem; }
+  .rich-text ol { list-style: decimal; padding-left: 1.5rem; }
+  .rich-text pre { overflow-x: auto; padding: 1rem; background: #f1f5f9; border-radius: .75rem; }
+  .rich-text code { font-family: monospace; background: #f1f5f9; }
+  .rich-text a { color: #1d4ed8; text-decoration: underline; }
+  .rich-text blockquote { border-left: 3px solid #cbd5e1; padding-left: 1rem; color: #475569; }
+  .rich-text :is(th,td) { border: 1px solid #cbd5e1; padding: .5rem; }
+  .meeting-diagram { margin-block: 1.5rem; overflow: hidden; border: 1px solid #cbd5e1; border-radius: .75rem; background: #fff; }
+  .meeting-diagram-preview { overflow-x: auto; padding: 1.25rem; }
+  .meeting-diagram-image { display: block; width: 100%; height: auto; margin-inline: auto; }
+  .meeting-diagram details { padding: .75rem 1rem; background: #f8fafc; }
+  .meeting-diagram summary { cursor: pointer; font-size: .875rem; color: #475569; }
+  .meeting-diagram summary:focus-visible { outline: 2px solid #2563eb; outline-offset: 4px; }
+  .meeting-diagram-status { padding-inline: 1rem; color: #475569; font-size: .875rem; }
+  .meeting-diagram[data-state="error"] .meeting-diagram-status { color: #b45309; }
+  .meeting-diagram-scratch { position: fixed; top: 0; left: 0; visibility: hidden; pointer-events: none; }
+  .page-shell {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
   }
 
-  .rich-text h2 {
-    @apply mb-4 mt-8 text-xl font-semibold tracking-tight text-foreground;
+  .eyebrow {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgb(29 78 216);
   }
+}
 
-  .rich-text h2:first-child {
-    @apply mt-0;
-  }
-
-  .rich-text h3 {
-    @apply mb-3 mt-6 text-lg font-semibold text-foreground;
-  }
-
-  .rich-text p {
-    @apply my-4;
-  }
-
-  .rich-text ul {
-    @apply my-4 list-disc space-y-2 pl-6;
-  }
-
-  .rich-text ol {
-    @apply my-4 list-decimal space-y-2 pl-6;
-  }
-
-  .rich-text li::marker {
-    @apply text-primary;
-  }
-
-  .rich-text a {
-    @apply text-primary underline underline-offset-4;
-  }
-
-  .rich-text blockquote {
-    @apply my-5 border-l-2 border-primary pl-4 italic;
-  }
-
-  .rich-text code {
-    @apply rounded bg-muted px-1.5 py-0.5 text-sm;
-  }
-
-  .rich-text pre {
-    @apply my-5 overflow-x-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100;
-  }
-
-  .rich-text pre code {
-    @apply bg-transparent p-0;
+@media (min-width: 40rem) {
+  .page-shell {
+    padding-inline: 2rem;
   }
 }
 
@@ -107,3 +110,10 @@ body {
     text-wrap: balance;
   }
 }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(15 23 42 / 0.35); }
+  60% { box-shadow: 0 0 0 8px rgb(15 23 42 / 0); }
+}
+
+.animate-pulse-ring { animation: pulse-ring 1.8s ease-out infinite; }

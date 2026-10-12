@@ -1,0 +1,50 @@
+---
+import '../styles/global.css';
+import { HeaderTabs } from '../features/teams/components/header-tabs';
+
+interface Props {
+  title?: string;
+  description?: string;
+  fullBleed?: boolean;
+}
+
+const {
+  title = 'Codystat-Teams',
+  description = '팀 운영 포털',
+  fullBleed = false
+} = Astro.props;
+const platformHome = import.meta.env.PUBLIC_CODY_STAT_HOME_URL || 'https://codystat.com/';
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/webp" href="/logo.webp" />
+    <title>{title}</title>
+  </head>
+  <body class="min-h-screen bg-background text-foreground">
+    <div class="min-h-screen bg-background">
+      <header class="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl lg:relative">
+        <div class="relative mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:px-6">
+          <a href="/teams" class="col-start-1 row-start-1 flex items-center gap-3">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm" aria-hidden="true">CS</span>
+            <span class="text-sm font-semibold tracking-tight text-foreground">Codystat-Teams</span>
+          </a>
+          <div class="col-span-2 row-start-2 min-w-0 lg:col-span-1 lg:col-start-2 lg:row-start-1 lg:w-max lg:justify-self-center">
+            <HeaderTabs currentPath={Astro.url.pathname} />
+          </div>
+          <a href={platformHome} class="col-start-2 row-start-1 flex h-10 items-center justify-center gap-2 justify-self-end rounded-xl px-3 text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-blue-600 lg:col-start-3">
+            <span class="text-sm font-medium">서비스</span><span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </header>
+      <main class={fullBleed ? 'w-full' : 'mx-auto w-full max-w-7xl px-4 py-6 lg:px-6 lg:py-8'}>
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

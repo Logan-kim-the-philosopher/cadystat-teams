@@ -1,0 +1,40 @@
+---
+import TeamsLayout from '../../../layouts/TeamsLayout.astro';
+import { MeetingBrowser } from '../../../features/teams/components/meeting-browser';
+import { RecentMeetingComments } from '../../../features/teams/components/recent-meeting-comments';
+import { listMeetings, recentMeetingComments } from '../../../features/teams/server/meeting-repository';
+
+let workspace = null;
+try { workspace = await listMeetings(); } catch (error) { Astro.response.status = 503; console.error('[teams/meetings]', error); }
+const latestMeeting = workspace?.notes[0];
+let recentComments: Awaited<ReturnType<typeof recentMeetingComments>> = [];
+let recentCommentsError = false;
+try { recentComments = await recentMeetingComments(); } catch { recentCommentsError = true; }
+
+---
+
+<TeamsLayout title="회의록 · Codystat-Teams" description="Teams 회의록과 티켓 연결">
+  <section class="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white shadow-soft lg:grid lg:grid-cols-[1fr_0.8fr] lg:items-center">
+    <div class="h-full p-7 sm:p-8">
+      <div class="flex h-full flex-col">
+        <span class="w-fit rounded-full border border-white/20 px-3 py-1 text-xs text-slate-300">Teams / Meetings</span>
+        <div class="flex flex-1 flex-col justify-center">
+          <h1 class="mt-5 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">대화에서 결정까지,<br />함께 만들고 기록합니다</h1>
+          <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">회의의 핵심 맥락과 후속 작업을 연결합니다.</p>
+        </div>
+        <div class="mt-auto pt-7">{latestMeeting ? <a href={`/teams/meetings/${latestMeeting.id}`} class="inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-100">최근 회의 바로가기 →</a> : <span class="text-sm text-slate-400">등록된 회의록이 없습니다.</span>}</div>
+      </div>
+    </div>
+    <div class="h-full p-7 sm:p-8">
+      <RecentMeetingComments client:load initialComments={recentComments} initialError={recentCommentsError} />
+    </div>
+  </section>
+
+  <section class="mt-10" aria-labelledby="meeting-archive-title">
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
+      <div><p class="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Archive</p><h2 id="meeting-archive-title" class="mt-2 text-2xl font-semibold tracking-tight">전체 회의록</h2></div>
+      <span class="text-sm text-muted-foreground">{workspace?.notes.length ?? 0}개의 기록</span>
+    </div>
+    {workspace ? <MeetingBrowser client:load workspace={workspace} /> : <p role="alert" class="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">회의록 데이터를 불러오지 못했습니다.</p>}
+  </section>
+</TeamsLayout>

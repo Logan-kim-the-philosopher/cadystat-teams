@@ -1,3 +1,5 @@
+> 아래는 기존 설계 참고 자료입니다. 현재 SQLite 스키마는 `src/lib/server/schema.ts`, 실행 구조는 [아키텍처](architecture.md)와 [README](../README.md)를 기준으로 합니다.
+
 # 데이터 모델 상세화
 
 ## 1. Team

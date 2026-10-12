@@ -2,20 +2,17 @@
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ticketDetails } from '../../lib/site-data';
+import { getRepository } from '../../lib/server/repository';
 import { getMeetingNotes } from '../../lib/server-meetings';
 import { renderMarkdown } from '../../lib/renderers/markdown';
 import MeetingEditorialThumbnail from '../../components/app/meeting-editorial-thumbnail.astro';
 
-const meetings = await getMeetingNotes();
-
-export function getStaticPaths() {
-  return [];
-}
+const meetings = getMeetingNotes();
 
 const { slug } = Astro.params;
 const meeting = meetings.find((item) => item.slug === slug);
-const linkedTickets = meeting?.linkedTicketIds.map((ticketId) => ticketDetails[ticketId]).filter(Boolean) ?? [];
+if (!meeting) Astro.response.status = 404;
+const linkedTickets = getRepository().getTickets().tickets.filter((ticket) => meeting?.linkedTicketIds.includes(ticket.id)).map((ticket) => ticket.detail);
 ---
 
 <SiteLayout title={`${meeting?.title ?? '회의록'} · 회의록`} description="전체 회의록 상세 화면">
@@ -52,7 +49,7 @@ const linkedTickets = meeting?.linkedTicketIds.map((ticketId) => ticketDetails[t
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
             {linkedTickets.map((ticket) => (
-              <a href={`/tickets/${ticket.id}`} class="group rounded-xl border border-border p-4 transition hover:border-primary/50 hover:bg-muted/40">
+              <a href={`/tickets?ticket=${encodeURIComponent(ticket.id)}`} class="group rounded-xl border border-border p-4 transition hover:border-primary/50 hover:bg-muted/40">
                 <div class="flex items-start justify-between gap-3">
                   <span class="text-sm font-semibold text-primary">{ticket.id}</span>
                   <Badge variant="outline">{ticket.status}</Badge>

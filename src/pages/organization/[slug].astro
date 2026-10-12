@@ -2,14 +2,11 @@
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { teamDetails } from '../../lib/site-data';
-
-export function getStaticPaths() {
-  return Object.keys(teamDetails).map((slug) => ({ params: { slug } }));
-}
+import { getRepository } from '../../lib/server/repository';
 
 const { slug } = Astro.params;
-const team = teamDetails[slug];
+const team = getRepository().getOrganizationUnits().find((item) => item.slug === slug || item.id === slug);
+if (!team) Astro.response.status = 404;
 ---
 
 <SiteLayout title={`${team?.name ?? '팀'} · 조직도`} description="팀 상세 화면">

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import MeetingEditorialThumbnail from '../../components/app/meeting-editorial-thumbnail.astro';
 import { getMeetingNotes } from '../../lib/server-meetings';
 
-const meetings = await getMeetingNotes();
+const meetings = getMeetingNotes();
 
 const latestMeeting = meetings[0];
 const nextMeeting = '9월 12일 (금) · 14:00';

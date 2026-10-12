@@ -1,3 +1,5 @@
+> 아래는 기존 설계 참고 자료입니다. 현재 SQLite 스키마는 `src/lib/server/schema.ts`, 실행 구조는 [아키텍처](architecture.md)와 [README](../README.md)를 기준으로 합니다.
+
 # 조직도 데이터 스키마
 
 조직도는 `OrgUnit` 하나를 기준으로 표현합니다. 과거의 `OrgSheet`와 `Team`을 분리하지 않고, 조직 정보와 조직 내부 구성원을 한 객체에 담습니다.

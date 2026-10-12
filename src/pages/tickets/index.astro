@@ -1,7 +1,10 @@
 ---
 import SiteLayout from '../../layouts/SiteLayout.astro';
 import { TicketBrowser } from '../../components/app/ticket-browser';
-import { teams, ticketDetails, tickets } from '../../lib/site-data';
+import { getRepository } from '../../lib/server/repository';
+
+const { tickets, teams } = getRepository().getTickets();
+const ticketDetails = Object.fromEntries(tickets.map((ticket) => [ticket.id, ticket.detail]));
 ---
 
 <SiteLayout title="티켓 · Codystat-Teams" description="버그와 기능 요청을 받는 단일 접수 큐">

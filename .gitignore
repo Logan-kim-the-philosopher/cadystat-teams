@@ -10,3 +10,9 @@ supabase/.temp/
 
 # Pi local state
 .pi/
+
+# Local SQLite database and WAL files
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

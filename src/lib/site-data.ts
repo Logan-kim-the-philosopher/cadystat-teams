@@ -34,7 +34,7 @@ export type Ticket = {
   title: string;
   team: string;
   teamSlug: string;
-  status: '신규' | '진행 중' | '완료';
+  status: '신규' | '배정' | '완료';
   priority: '긴급' | '높음' | '보통';
   type: '버그' | '기능 요청';
   reporter: string;
@@ -45,7 +45,7 @@ export type Ticket = {
 export type TicketDetail = {
   id: string;
   title: string;
-  status: '신규' | '진행 중' | '완료';
+  status: '신규' | '배정' | '완료';
   priority: '긴급' | '높음' | '보통';
   type: '버그' | '기능 요청';
   ownerTeam: string;
@@ -135,7 +135,7 @@ export const tickets: Ticket[] = [
     title: '회의록 PDF 내보내기 기능 요청',
     team: '마케팅팀',
     teamSlug: 'product',
-    status: '진행 중',
+    status: '배정',
     priority: '보통',
     type: '기능 요청',
     reporter: '경영지원팀',
@@ -147,7 +147,7 @@ export const tickets: Ticket[] = [
     title: '입력 접수 중복 생성 버그',
     team: '경영지원팀',
     teamSlug: 'operations',
-    status: '진행 중',
+    status: '배정',
     priority: '긴급',
     type: '버그',
     reporter: '웹 폼',
@@ -173,7 +173,7 @@ export const ticketDetails: Record<string, TicketDetail> = {
   'T-102': {
     id: 'T-102',
     title: '모바일에서 로그인 폼 검증이 동작하지 않음',
-    status: '담당 배정',
+    status: '배정',
     priority: '높음',
     type: '버그',
     ownerTeam: '개발팀',
@@ -187,7 +187,7 @@ export const ticketDetails: Record<string, TicketDetail> = {
   'T-097': {
     id: 'T-097',
     title: '회의록 PDF 내보내기 기능 요청',
-    status: '진행 중',
+    status: '배정',
     priority: '보통',
     type: '기능 요청',
     ownerTeam: '마케팅팀',
@@ -208,7 +208,7 @@ export const ticketDetails: Record<string, TicketDetail> = {
   'T-088': {
     id: 'T-088',
     title: '입력 접수 중복 생성 버그',
-    status: '보류',
+    status: '배정',
     priority: '긴급',
     type: '버그',
     ownerTeam: '경영지원팀',

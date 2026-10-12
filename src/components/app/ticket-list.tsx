@@ -28,6 +28,16 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
   const [localDetails, setLocalDetails] = React.useState(details);
   const [commentDraft, setCommentDraft] = React.useState('');
   const [commentSubmitting, setCommentSubmitting] = React.useState(false);
+  const openedLinkedTicket = React.useRef(false);
+  React.useEffect(() => {
+    if (openedLinkedTicket.current) return;
+    const id = new URLSearchParams(window.location.search).get('ticket');
+    const ticket = tickets.find((item) => item.id === id);
+    if (ticket) {
+      setSelectedTicket(ticket);
+      openedLinkedTicket.current = true;
+    }
+  }, [tickets]);
   React.useEffect(() => {
     setDisplayTickets(tickets);
     setLocalDetails(details);
@@ -63,7 +73,7 @@ export function TicketList({ tickets, teams, details, view }: TicketListProps) {
   }
 
   const kanbanColumns = ['신규', '배정', '완료'];
-  async function moveToStatus(status: string, event: React.DragEvent<HTMLDivElement>) {
+  async function moveToStatus(status: string, event: React.DragEvent<HTMLElement>) {
     event.preventDefault();
     const ticketId = event.dataTransfer.getData('ticket-id') || draggingTicketId;
     setDragOverColumn(null);

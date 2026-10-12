@@ -1,10 +1,10 @@
-import type { NodeProps } from '@xyflow/react';
+import type { Node, NodeProps } from '@xyflow/react';
 import { Handle, Position } from '@xyflow/react';
 
 export type OrganizationMemberNodeData = {
   name: string;
   title: string;
-  role: 'member';
+  role: '팀원';
   gender: 'male' | 'female';
   compact?: boolean;
 };
@@ -13,7 +13,7 @@ function profileIllustration(gender: 'male' | 'female') {
   return gender === 'male' ? '/avatars/profile-male.svg' : '/avatars/profile-female.svg';
 }
 
-export function OrganizationMemberNode({ data }: NodeProps<OrganizationMemberNodeData>) {
+export function OrganizationMemberNode({ data }: NodeProps<Node<OrganizationMemberNodeData>>) {
   const compact = data.compact;
   return (
     <div className={compact

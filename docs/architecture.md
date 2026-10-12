@@ -1,54 +1,47 @@
 # 시스템 아키텍처
 
-## 개요
-
-Codystat-Teams는 Astro Node 서버와 Supabase(PostgreSQL)를 사용하는 단일 웹 애플리케이션입니다.
-
 ```text
 Browser
   └─ Astro pages + React islands
-       └─ /api/* (Astro server endpoints)
-            └─ Supabase REST API / RPC
-                 └─ PostgreSQL
+       ├─ /api/* → Repository
+       └─ 서버 렌더링 → Repository
+                         └─ node:sqlite → data/codystat.sqlite
 ```
 
-외부 업무 관리 서비스나 별도의 애플리케이션 서버는 필요하지 않습니다.
+## 저장소
 
-## 책임 경계
+현재 런타임은 Node.js 내장 `node:sqlite`를 사용합니다. Supabase 요청과 키는 사용하지 않습니다.
+스키마는 `src/lib/server/schema.ts`, 시드는 `src/lib/server/seed.ts`, 업무 규칙은 `repository.ts`에서 관리합니다.
+`supabase/`는 이전 구현의 마이그레이션 참고 자료입니다.
 
-### 프론트엔드
-- `src/pages/*.astro`: 페이지 조합과 서버 렌더링
-- `src/components/app/*.tsx`: 티켓 보드, 조직도 등 상호작용 기능
-- `src/components/ui/`: 재사용 가능한 shadcn 스타일 UI
-- 브라우저는 `/api/*`만 호출하며 Supabase service-role 키를 직접 사용하지 않습니다.
+DB는 `SQLITE_PATH`에서 열며 기본 경로는 `data/codystat.sqlite`입니다.
+연결마다 외래 키 검사를 켜고 WAL 모드와 5초 busy timeout을 적용합니다.
+팀·구성원 일괄 저장, 티켓 저장과 이력 기록, 회의록과 티켓 연결은 트랜잭션으로 처리합니다.
 
-### 서버 API
-- `src/pages/api/tickets/index.ts`: 티켓 CRUD와 상태 변경 규칙
-- `src/pages/api/ticket-comments.ts`: 티켓 댓글
-- `src/pages/api/meetings/index.ts`: 회의록
-- `src/pages/api/meeting-comments.ts`: 회의록 댓글
-- `src/pages/api/organization/index.ts`: 팀·구성원·조직도
+## 초기화
 
-API 엔드포인트는 Supabase REST API를 서버에서 호출하며, 조직 팀 편집은 `save_organization_team` RPC를 사용합니다.
+스키마와 기본 유형·상태는 자동으로 초기화됩니다.
+`SQLITE_SEED=0`이 아니면 예제 데이터를 DB당 한 번 넣습니다.
+`seed_versions`가 완료 여부를 기록하므로 개발 서버 재시작이나 시드 재실행으로 편집 내용이 사라지지 않습니다.
+시드 오류가 발생하면 해당 트랜잭션 전체를 되돌립니다.
 
-### 데이터베이스
-- 모든 영속 데이터의 원본은 Supabase입니다.
-- 스키마 변경은 `supabase/migrations/`의 순차 마이그레이션으로 관리합니다.
-- 현재 구조는 인증/권한보다 애플리케이션 API와 데이터 모델 이식에 초점을 둡니다. 운영 환경에서는 인증과 API 권한 정책을 별도로 추가해야 합니다.
+## 데이터 흐름
 
-## 상태 흐름
+- 조직 API는 팀, 구성원, 팀장과 보고 관계를 반환합니다.
+- 티켓 API는 유형, 상태, 담당 팀, 이력, 댓글, 회의록 연결을 함께 반환합니다.
+- 회의록 목록과 상세 화면도 같은 저장소를 조회합니다. 공개 목록은 `published` 회의록만 표시합니다.
+- 회의록의 연결 티켓은 `/tickets?ticket=T-...`로 이동하면 상세 모달이 열립니다.
+- 사용자 입력은 prepared statement의 바인딩 값으로 전달합니다.
 
-티켓 상태는 `신규 → 배정 → 완료` 흐름을 기본으로 합니다.
+## 상태와 삭제 규칙
 
-- 담당 팀이 없는 티켓은 `배정`으로 이동할 수 없습니다.
-- `신규`로 되돌리면 담당 팀과 팀별 배정이 해제됩니다.
-- `완료` 상태에서도 담당 팀 정보는 유지됩니다.
-- 모든 변경은 `ticket_history`에 기록됩니다.
+티켓 상태는 `신규 → 배정 → 완료`입니다.
+담당 팀 없는 배정은 거부하고, 신규 상태로 변경하면 팀과 담당자를 해제합니다.
+팀 삭제 시 배정된 티켓은 신규 상태로 돌아가며 완료 티켓의 완료 상태는 유지됩니다.
+하위 팀이 존재하는 팀은 삭제할 수 없습니다.
+티켓·회의록의 댓글과 연결 관계는 외래 키로 정리합니다.
 
-## 이식 시 변경 지점
+## 검증
 
-1. `.env.example`을 복사해 Supabase URL과 service-role 키를 주입합니다.
-2. `supabase db push`로 마이그레이션을 적용합니다.
-3. 조직과 초기 티켓 유형·상태 데이터를 준비합니다.
-4. 배포 플랫폼에서 Node adapter로 Astro 서버를 실행합니다.
-5. 인증을 붙이는 경우 API 라우트의 요청 검증과 Supabase RLS 정책을 함께 추가합니다.
+`npm test`는 예제 데이터, 상태 전이, 트랜잭션 롤백, 삭제 관계, 댓글·회의록 연결,
+DB 파일 재오픈 후 데이터 유지와 시드 중복 방지를 확인합니다.

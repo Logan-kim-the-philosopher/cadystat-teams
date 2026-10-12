@@ -1,6 +1,6 @@
 import * as React from 'react';
 import dagre from '@dagrejs/dagre';
-import { Background, Handle, Panel, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
+import { Background, BackgroundVariant, Handle, Panel, Position, ReactFlow, type Edge, type Node, type NodeProps } from '@xyflow/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import '@xyflow/react/dist/style.css';
 
@@ -15,14 +15,14 @@ type SheetNodeData = {
 type LeadNodeData = {
   name: string;
   title: string;
-  role: 'lead';
+  role: '팀장';
   gender: 'male' | 'female';
   avatar?: string;
 };
 
 
 type SheetLayout = {
-  unit: OrgUnit;
+  sheet: OrgUnit;
   width: number;
   height: number;
   mode: 'hierarchical' | 'horizontal';
@@ -55,7 +55,7 @@ function profileIllustration(gender: 'male' | 'female') {
   return gender === 'male' ? '/avatars/profile-male.svg' : '/avatars/profile-female.svg';
 }
 
-function SheetNode({ data }: NodeProps<SheetNodeData>) {
+function SheetNode({ data }: NodeProps<Node<SheetNodeData>>) {
   return (
     <>
     <style>{`.react-flow__node:hover > .relative { border-color: rgb(148 163 184); box-shadow: 0 20px 35px rgba(15,23,42,.12); }`}</style>
@@ -75,7 +75,7 @@ function SheetNode({ data }: NodeProps<SheetNodeData>) {
   );
 }
 
-function LeadNode({ data }: NodeProps<LeadNodeData>) {
+function LeadNode({ data }: NodeProps<Node<LeadNodeData>>) {
   return (
     <div className="flex h-full w-full items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm">
@@ -116,8 +116,7 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
   const leadPerson = hasLead ? unit.people[leadIndex] : null;
   const members = hasLead ? unit.people.filter((_, index) => index !== leadIndex) : unit.people;
 
-  if (hasLead) {
-    const memberCount = unit.people.length;
+  if (leadPerson) {
     const depths = new Map<string, number>([[leadPerson.id, 0]]);
     const pending = [...members];
     while (pending.length > 0) {
@@ -139,7 +138,6 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
 
     return {
       sheet: unit,
-      team: unit,
       width,
       height,
       mode: 'hierarchical',
@@ -154,7 +152,6 @@ function resolveSheetLayout(unit: OrgUnit): SheetLayout {
 
   return {
     sheet: unit,
-    team: unit,
     width,
     height,
     mode: 'horizontal',
@@ -335,7 +332,8 @@ function buildGraph(units: OrgUnit[]) {
       }
     });
 
-    if (layout.mode !== 'hierarchical' || !layout.leadPerson) return;
+    const leadPerson = layout.leadPerson;
+    if (layout.mode !== 'hierarchical' || !leadPerson) return;
 
     // Lay out members from reportsToMemberId instead of treating them as one list.
     const memberGraph = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
@@ -348,7 +346,7 @@ function buildGraph(units: OrgUnit[]) {
     const childrenByManager = new Map<string, string[]>();
     layout.members.forEach((person) => {
       const managerId = person.reportsToMemberId
-        ? (person.reportsToMemberId === layout.leadPerson.id ? leadNodeId : person.reportsToMemberId)
+        ? (person.reportsToMemberId === leadPerson.id ? leadNodeId : person.reportsToMemberId)
         : leadNodeId;
       if (!managerId) return;
       childrenByManager.set(managerId, [...(childrenByManager.get(managerId) ?? []), person.id]);
@@ -395,7 +393,7 @@ function buildGraph(units: OrgUnit[]) {
       .sort((left, right) => (memberGraph.node(right)?.y ?? 0) - (memberGraph.node(left)?.y ?? 0))
       .forEach((nodeId) => {
         const children = layout.members
-          .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : layout.leadPerson.id) === (nodeId === leadNodeId ? layout.leadPerson.id : nodeId))
+          .filter((person) => (person.reportsToMemberId ? person.reportsToMemberId : leadPerson.id) === (nodeId === leadNodeId ? leadPerson.id : nodeId))
           .map((person) => person.id);
         const node = nodesById.get(nodeId);
         if (!node || children.length === 0) return;
@@ -433,7 +431,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
     fetch(`/api/organization?refresh=${Date.now()}`)
       .then(async (response) => {
         const payload = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(payload?.error ?? `Supabase 오류 (${response.status})`);
+        if (!response.ok) throw new Error(payload?.error ?? `조직도 조회 오류 (${response.status})`);
         return payload;
       })
       .then((payload) => {
@@ -446,11 +444,11 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
           'dbede9f0-feb1-4c4c-88dd-0cf213b67aa3': 'engineering',
           '9504146c-a139-4476-a4be-133c997ef4d4': 'operations',
         };
-        const planeTeams = payload.teams as Array<{ id: string; name: string; parentTeamId: string | null; leadMemberId: string | null }>;
+        const planeTeams = payload.teams as Array<{ id: string; slug?: string; name: string; parentTeamId: string | null; leadMemberId: string | null }>;
         const planeMembers = payload.members as Array<{ id: string; name: string; title: string; gender?: 'male' | 'female' | null; teamProjectId: string | null; reportsTo: string | null; sortOrder: number }>;
         const executiveTeam = planeTeams.find((team) => team.name === '운영진') ?? planeTeams[0];
-        const nextUnits = planeTeams.map((team, index) => {
-          const slug = projectSlugById[team.id] ?? `plane-${team.id}`;
+        const nextUnits: OrgUnit[] = planeTeams.map((team, index) => {
+          const slug = team.slug ?? projectSlugById[team.id] ?? team.id;
           const people = planeMembers
             .filter((member) => member.teamProjectId === team.id)
             .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -467,6 +465,8 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
             id: team.id,
             slug,
             name: team.name,
+            description: `${team.name}의 구성원과 담당 업무입니다.`,
+            responsibilities: [],
             parentId: team.parentTeamId ?? null,
             leadMemberId: team.leadMemberId ?? null,
             members: people.length,
@@ -573,7 +573,7 @@ export function OrganizationFlow({ units }: OrganizationFlowProps) {
         minZoom={0.3}
         maxZoom={1.4}
       >
-        <Background variant="dots" gap={56} size={5} color="rgba(100, 116, 139, 0.16)" />
+        <Background variant={BackgroundVariant.Dots} gap={56} size={5} color="rgba(100, 116, 139, 0.16)" />
         <Panel position="top-left" className="!mt-8 !mb-4 !left-1/2 !right-auto !w-full !max-w-7xl !-translate-x-1/2 !px-2 lg:!px-4">
           <button
             type="button"

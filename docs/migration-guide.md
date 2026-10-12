@@ -1,118 +1,47 @@
-# 서비스 이식 가이드
+# 로컬 실행과 서버 이식
 
-다른 개발자가 이 프로젝트를 자신의 서버와 **개인 Supabase 프로젝트**로 옮기는 절차입니다.
+현재 버전은 SQLite를 사용합니다. Supabase 프로젝트, CLI, REST API 키는 필요하지 않습니다.
 
-> 현재 애플리케이션은 Supabase REST API와 Supabase RPC를 사용합니다. 따라서 일반 PostgreSQL만으로는 바로 실행되지 않으며, Supabase를 사용하지 않으려면 별도의 DB adapter 작업이 필요합니다.
+## 준비
 
-## 요구 사항
-
-- Node.js 20 이상
+- Node.js 22.18 이상
 - npm
-- Supabase CLI
-- 새 Supabase 프로젝트
-
-## 1. 코드 준비
+- SQLite 파일을 저장할 쓰기 가능한 디렉터리
 
 ```bash
-git clone <repository-url>
-cd codystat-teams
-npm install
-cp .env.example .env
-```
-
-`.env`에는 실제 값을 로컬 파일 또는 비밀 관리 도구로 주입합니다. 비밀값을 커밋하지 마세요.
-
-필수 환경 변수:
-
-```text
-CODY_STAT_SUPABASE_URL=https://<project-ref>.supabase.co
-CODY_STAT_SUPABASE_SERVICE_ROLE_KEY=<server-only-secret>
-```
-
-`CODY_STAT_SUPABASE_SERVICE_ROLE_KEY`는 서버에서만 사용해야 하며 브라우저 번들에 포함하면 안 됩니다.
-
-## 2. Supabase 연결과 스키마 적용
-
-Supabase 프로젝트에 로그인하고 연결합니다.
-
-```bash
-supabase login
-supabase link --project-ref <project-ref>
-supabase db push --dry-run
-supabase db push
-supabase migration list
-```
-
-마이그레이션에는 조직, 구성원, 티켓, 티켓 이력, 회의록, 댓글, 관계 테이블과 조직 저장 RPC가 포함됩니다.
-
-빈 DB에서 확인할 예시 데이터는 `supabase/seed.example.sql`에 있습니다.
-
-```bash
-psql "$DATABASE_URL" -f supabase/seed.example.sql
-```
-
-seed에는 운영진·개발팀·기획팀, 예시 구성원, 예시 티켓, 예시 회의록이 포함됩니다. 실제 서비스 데이터는 포함하지 않으므로 필요에 맞게 수정해서 사용하세요.
-
-기존 데이터를 이식할 때는 먼저 테이블 구조를 확인한 뒤 `teams`, `members`, `ticket_types`, `ticket_statuses` 순서로 넣고, 티켓과 회의록을 연결합니다.
-
-## 3. 로컬 실행
-
-```bash
+npm ci
+npm run db:seed
 npm run dev
 ```
 
-기본 화면:
+화면은 `/meetings`, `/tickets`, `/organization`에서 확인합니다.
+DB 기본 경로는 `data/codystat.sqlite`이며 `SQLITE_PATH` 환경 변수로 변경할 수 있습니다.
+선택적으로 `.env.example`을 `.env`에 복사해 설정합니다.
 
-- `/`: 대시보드
-- `/organization`: 조직도
-- `/tickets`: 티켓 보드
-- `/meetings`: 회의록
+## 테스트 데이터
 
-## 4. 배포
+처음 실행하면 팀 4개, 구성원 10명, 티켓 18개, 회의록 8개 및 댓글·이력·연결 데이터를 넣습니다.
+`npm run db:seed`는 이미 시드가 적용된 DB를 변경하지 않습니다.
+빈 DB를 원하면 새 `SQLITE_PATH`와 `SQLITE_SEED=0`을 설정하고 서버를 시작합니다.
+기존 DB에 `SQLITE_SEED=0`을 지정해도 이미 저장된 데이터는 삭제되지 않습니다.
 
-Provider-neutral Node 배포를 위해 Astro Node adapter를 사용합니다.
+## 배포
 
 ```bash
+npm test
 npm run build
-node ./dist/server/entry.mjs
+SQLITE_PATH=/absolute/path/to/data/codystat.sqlite SQLITE_SEED=0 node dist/server/entry.mjs
 ```
 
-배포 서버에 다음을 설정합니다.
+DB 파일은 빌드 결과에 포함되지 않습니다. 배포 시 `SQLITE_PATH`를 영속 디스크로 지정하세요.
+포트와 호스트는 `PORT`, `HOST` 환경 변수로 설정합니다.
+서버를 시작하는 프로세스에 환경 변수를 주입하세요. 직접 `node`로 실행하는 경우 `.env`가 자동 로드되지 않습니다.
 
-- `HOST` 및 `PORT`는 호스팅 환경의 규칙에 맞게 설정
-- `CODY_STAT_SUPABASE_URL`
-- `CODY_STAT_SUPABASE_SERVICE_ROLE_KEY`
+## 데이터 이동
 
-실제 배포 전에 `npm run build`, 조직도 조회, 티켓 생성·상태 변경, 회의록 조회를 확인합니다.
+DB를 사용하는 서버를 종료한 뒤 SQLite 파일을 옮기고 새 서버의 `SQLITE_PATH`를 지정합니다.
+WAL 모드에서 실행 중인 DB의 본체 파일만 복사하면 최근 변경이 빠질 수 있습니다.
+실행 중 백업은 SQLite backup 기능을 사용하세요.
 
-## 5. 데이터 구조 요약
-
-| 영역 | 주요 테이블 | 설명 |
-|---|---|---|
-| 조직 | `teams`, `members` | 상위 팀, 팀장, 구성원 관계 |
-| 티켓 | `tickets`, `ticket_types`, `ticket_statuses` | 접수·배정·상태 관리 |
-| 이력/댓글 | `ticket_history`, `ticket_comments` | 티켓 변경 추적과 댓글 |
-| 회의록 | `meeting_notes`, `meeting_comments` | Markdown 회의록과 댓글 |
-| 연결 | `meeting_note_tickets` | 회의록과 티켓의 다대다 관계 |
-
-자세한 컬럼과 관계는 [`organization-schema.md`](organization-schema.md), [`data-model.md`](data-model.md), 그리고 실제 마이그레이션 파일을 기준으로 확인합니다.
-
-## 6. 기능별 이식 포인트
-
-### 조직도
-`src/pages/api/organization/index.ts`가 `teams`와 `members`를 조회·수정합니다. 조직 저장 RPC는 `supabase/migrations/20250910010000_save_organization_team_rpc.sql` 및 최신 보정 마이그레이션에서 정의됩니다.
-
-### 티켓
-`src/pages/api/tickets/index.ts`에서 상태 이동 규칙과 팀 배정 검증을 확인합니다. 티켓에 필요한 외래 키와 상태 데이터는 티켓 관련 마이그레이션을 그대로 적용해야 합니다.
-
-### 회의록
-회의록 본문은 Markdown 문자열로 저장하고, 댓글과 관련 티켓은 별도 관계 테이블을 사용합니다.
-
-## 7. 운영 전 점검
-
-- service-role 키가 클라이언트 코드나 로그에 노출되지 않는지 확인
-- Supabase 백업과 복구 절차 마련
-- API 인증·인가 추가
-- CORS와 rate limit 설정
-- 빈 데이터베이스에서 마이그레이션을 처음부터 재현
-- `npm run build`와 주요 화면의 브라우저 검증
+기존 `supabase/migrations/`와 `supabase/seed.example.sql`은 이전 PostgreSQL 구현 자료이며
+SQLite에 직접 적용하지 않습니다. 현재 스키마는 `src/lib/server/schema.ts`를 기준으로 합니다.

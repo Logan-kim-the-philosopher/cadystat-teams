@@ -1,24 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-
-const root = fileURLToPath(new URL('../', import.meta.url));
-const supabaseBin = fileURLToPath(new URL('../node_modules/.bin/supabase', import.meta.url));
-
-function localEnvironment() {
-  if (process.env.CODY_STAT_SUPABASE_URL && process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY) {
-    return { url: process.env.CODY_STAT_SUPABASE_URL, key: process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY };
-  }
-  const output = execFileSync(supabaseBin, ['status', '-o', 'env'], { cwd: root, encoding: 'utf8' });
-  const values = Object.fromEntries(output.split('\n').flatMap((line) => {
-    const matched = line.match(/^([A-Z_]+)=(.*)$/);
-    if (!matched) return [];
-    return [[matched[1], matched[2].replace(/^['"]|['"]$/g, '')]];
-  }));
-  assert.ok(values.API_URL, 'local Supabase API_URL이 필요합니다.');
-  assert.ok(values.SERVICE_ROLE_KEY, 'local Supabase SERVICE_ROLE_KEY가 필요합니다.');
-  return { url: values.API_URL, key: values.SERVICE_ROLE_KEY };
-}
+import { spawn } from 'node:child_process';
+import { localEnvironment, root, runtimeEnvironment } from './helpers/local-server.mjs';
 
 async function waitForServer(baseUrl) {
   for (let attempt = 0; attempt < 50; attempt += 1) {
@@ -47,8 +29,7 @@ const server = spawn(process.execPath, ['dist/server/entry.mjs'], {
     ...process.env,
     HOST: '127.0.0.1',
     PORT: port,
-    CODY_STAT_SUPABASE_URL: local.url,
-    CODY_STAT_SUPABASE_SERVICE_ROLE_KEY: local.key
+    ...runtimeEnvironment(local)
   },
   stdio: ['ignore', 'pipe', 'pipe']
 });

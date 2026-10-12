@@ -1,18 +1,10 @@
 import assert from 'node:assert/strict';
-import { execFileSync, spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
-const root = fileURLToPath(new URL('../', import.meta.url));
-const output = process.env.CODY_STAT_SUPABASE_URL && process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY
-  ? ''
-  : execFileSync(`${root}node_modules/.bin/supabase`, ['status', '-o', 'env'], { cwd: root, encoding: 'utf8' });
-const local = process.env.CODY_STAT_SUPABASE_URL && process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY
-  ? { API_URL: process.env.CODY_STAT_SUPABASE_URL, SERVICE_ROLE_KEY: process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY }
-  : Object.fromEntries(output.split('\n').flatMap((line) => { const m = line.match(/^([A-Z_]+)=(.*)$/); return m ? [[m[1], m[2].replace(/^['"]|['"]$/g, '')]] : []; }));
-assert.ok(local.API_URL && local.SERVICE_ROLE_KEY);
-const client = createClient(local.API_URL, local.SERVICE_ROLE_KEY);
+import { spawn } from 'node:child_process';
+import { cleanupLocalRows, localEnvironment, root, runtimeClient, runtimeEnvironment } from './helpers/local-server.mjs';
+const local = localEnvironment();
+const client = runtimeClient(local);
 const base = 'http://127.0.0.1:4335';
-const server = spawn(process.execPath, ['dist/server/entry.mjs'], { cwd: root, env: { ...process.env, HOST: '127.0.0.1', PORT: '4335', CODY_STAT_SUPABASE_URL: local.API_URL, CODY_STAT_SUPABASE_SERVICE_ROLE_KEY: local.SERVICE_ROLE_KEY }, stdio: ['ignore', 'pipe', 'pipe'] });
+const server = spawn(process.execPath, ['dist/server/entry.mjs'], { cwd: root, env: { ...process.env, HOST: '127.0.0.1', PORT: '4335', ...runtimeEnvironment(local) }, stdio: ['ignore', 'pipe', 'pipe'] });
 let log = ''; server.stdout.on('data', (c) => { log += c; }); server.stderr.on('data', (c) => { log += c; });
 let id;
 async function json(response) { assert.ok(response.ok, `HTTP ${response.status}`); return response.json(); }
@@ -55,4 +47,4 @@ try {
   assert.ifError(comments.error); assert.equal(comments.data.length, 1);
   console.log('meeting API create/update/comment/soft-delete and deleted-record protection: PASS');
 } catch (error) { console.error(log.slice(-1500)); throw error; }
-finally { if (id) await client.from('meeting_notes').delete().eq('id', id); server.kill('SIGTERM'); }
+finally { if (id) cleanupLocalRows('meeting_notes', [id]); server.kill('SIGTERM'); }

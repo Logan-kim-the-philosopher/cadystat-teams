@@ -26,5 +26,5 @@ test('organization UI uses the namespaced API and accessible editor dialogs', as
   assert.match(`${flow}\n${editor}`, /\/api\/teams\/organization/);
   assert.match(flow, /aria-modal="true"/);
   assert.match(api, /OrganizationRepositoryError/);
-  assert.doesNotMatch(api, /CODY_STAT_SUPABASE_SERVICE_ROLE_KEY|createClient/);
+  assert.doesNotMatch(api, /TEAMS_SUPABASE_ACCESS_TOKEN|createClient/);
 });

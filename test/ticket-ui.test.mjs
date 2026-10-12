@@ -28,7 +28,7 @@ test('ticket APIs delegate to the repository and keep credentials behind the ser
 
   assert.match(routes, /ticket-repository/);
   assert.match(routes, /ticketErrorResponse/);
-  assert.doesNotMatch(routes, /CODY_STAT_SUPABASE_SERVICE_ROLE_KEY|createClient|\.from\(/);
+  assert.doesNotMatch(routes, /TEAMS_SUPABASE_ACCESS_TOKEN|createClient|\.from\(/);
 });
 
 test('ticket editor and detail expose accessible dialogs and normalized statuses', async () => {

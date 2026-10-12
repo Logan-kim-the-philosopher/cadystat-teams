@@ -1,11 +1,10 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
 import { issueMeetingApiKey, revokeMeetingApiKey } from '../src/lib/server/meeting-api-keys.mjs';
-import { localEnvironment, startServer } from './helpers/local-server.mjs';
+import { cleanupLocalRows, localEnvironment, runtimeClient, startServer } from './helpers/local-server.mjs';
 const local = localEnvironment();
 assert.ok(['localhost','127.0.0.1','[::1]'].includes(new URL(local.url).hostname));
-const db = createClient(local.url, local.key);
+const db = runtimeClient(local);
 const server = await startServer(4351, local);
 const keys = [], notes = [], tickets = [];
 const title = `피드백 통합 ${randomUUID()}`;
@@ -76,8 +75,8 @@ try {
   const redirect=await fetch(`${server.base}/teams`,{redirect:'manual'}); assert.equal(redirect.status,302); assert.equal(redirect.headers.get('location'),'/teams/meetings');
   console.log('회의록 피드백: 원자적 티켓 생성·재시도, 키 소유권/만료/폐기, 부분 수정/삭제, 최근 댓글/삭제/링크, Teams 진입 PASS');
 } finally {
-  for (const id of notes) await db.from('meeting_notes').delete().eq('id',id);
-  for (const id of tickets) await db.from('tickets').delete().eq('id',id);
-  for (const id of keys) await db.from('meeting_api_keys').delete().eq('id',id);
+  cleanupLocalRows('meeting_notes', notes);
+  cleanupLocalRows('tickets', tickets);
+  cleanupLocalRows('meeting_api_keys', keys);
   server.stop();
 }

@@ -19,22 +19,26 @@
 
 ## 로컬 실행
 
-Node.js 22.18 이상과 Teams migration이 적용된 Supabase가 필요합니다.
+Node.js 22.18 이상, Docker Desktop과 Teams migration이 적용된 Supabase가 필요합니다.
 
 ```bash
 npm ci
-cp .env.example .env
-npm run dev
+npm run db:start
+npm run db:reset
+npm run dev:local
 ```
+
+`dev:local`은 로컬 Supabase 상태를 읽어 메모리에서만 `teams_runtime` 토큰을 만들고 Astro에 전달합니다. 토큰 원문을 파일이나 출력에 남기지 않습니다. 운영·공유 개발 환경에서는 아래 환경 변수를 배포 secret으로 주입하고 `npm run dev` 또는 빌드 서버를 실행합니다.
 
 서버 전용 환경 변수:
 
 ```dotenv
-CODY_STAT_SUPABASE_URL=
-CODY_STAT_SUPABASE_SERVICE_ROLE_KEY=
+TEAMS_SUPABASE_URL=
+TEAMS_SUPABASE_PUBLISHABLE_KEY=
+TEAMS_SUPABASE_ACCESS_TOKEN=
 ```
 
-service-role 또는 secret key에 `PUBLIC_` 접두사를 붙이지 않습니다. 브라우저 bundle과 로그에 원문을 넣지 않습니다.
+Teams 애플리케이션에는 공용 `service_role` key를 주입하지 않습니다. `TEAMS_SUPABASE_ACCESS_TOKEN`은 RLS를 우회하지 않는 `teams_runtime` 역할 전용 JWT여야 하며, 서버 시작 시 역할을 확인합니다. access token에 `PUBLIC_` 접두사를 붙이거나 브라우저 bundle·로그에 원문을 넣지 않습니다.
 
 `PUBLIC_CODY_STAT_HOME_URL`은 헤더의 “서비스” 링크가 돌아갈 Cody Stat Playground 주소입니다. 기본값은 `https://codystat.com/`입니다.
 
@@ -44,6 +48,9 @@ service-role 또는 secret key에 `PUBLIC_` 접두사를 붙이지 않습니다.
 npm run check
 npm test
 npm run build
+npm run db:test
+npm run db:lint
+npm run db:restore-smoke
 ```
 
 Supabase 로컬 환경이 준비된 경우 다음 통합 검증을 추가로 실행합니다.
@@ -81,4 +88,6 @@ npm run meeting-keys -- revoke <키-ID>
 - 플랫폼: 컨테이너 배포, secret 주입, `teams.codystat.com`과 Gateway
 - Admission: 사용자·조직·권한, 사용자 token과 개발자 API key
 
-`src/lib/server`의 SQLite 구현과 과거 Supabase migration은 이관 기준 보존을 위해 남아 있습니다. 운영 데이터 계보와 최소 권한 credential 정리는 다음 데이터 분리 단계에서 단일 경로로 확정합니다. 운영 DB에는 `reset`이나 예제 seed를 실행하지 않습니다.
+Teams DB 변경은 이 저장소의 `supabase/migrations`에만 추가합니다. 2025년 migration 시도와 SQLite 문서는 `docs/legacy`에 감사 자료로 보존하며 현재 실행 경로에서는 사용하지 않습니다. 운영 DB에는 `reset`이나 개발 seed를 실행하지 않습니다.
+
+데이터 무손실 전환과 rollback 절차는 Cody Stat의 `docs/runbooks/teams-data-separation.md`를 따릅니다.

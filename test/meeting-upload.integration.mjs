@@ -1,18 +1,17 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
 import { hashMeetingApiKey, issueMeetingApiKey, revokeMeetingApiKey } from '../src/lib/server/meeting-api-keys.mjs';
-import { localEnvironment, root, startServer } from './helpers/local-server.mjs';
+import { cleanupLocalRows, localEnvironment, root, runtimeClient, runtimeEnvironment, startServer } from './helpers/local-server.mjs';
 
 const local = localEnvironment();
 assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(new URL(local.url).hostname));
-const client = createClient(local.url, local.key);
+const client = runtimeClient(local);
 const server = await startServer(4347, local);
 const keys = [];
 const body = { title: `에이전트 업로드 검증 ${randomUUID()}`, date: '2026-09-29', content: '# 결정 사항\n\n- 업로드 확인\n\n<script>evil()</script>' };
 const command = (args) => execFileSync(process.execPath, ['scripts/meeting-api-keys.mjs', ...args], {
-  cwd: root, encoding: 'utf8', env: { ...process.env, CODY_STAT_SUPABASE_URL: local.url, CODY_STAT_SUPABASE_SERVICE_ROLE_KEY: local.key }, stdio: ['ignore', 'pipe', 'pipe']
+  cwd: root, encoding: 'utf8', env: { ...process.env, ...runtimeEnvironment(local) }, stdio: ['ignore', 'pipe', 'pipe']
 });
 function upload(key, input = body, requestId = randomUUID(), options = {}) {
   return fetch(`${server.base}/api/v1/meetings${options.query ?? ''}`, {
@@ -111,8 +110,8 @@ try {
       const records = await client.from('meeting_api_uploads').select('meeting_note_id').in('api_key_id', keys);
       assert.ifError(records.error);
       const ids = records.data.map((row) => row.meeting_note_id).filter(Boolean);
-      if (ids.length) assert.ifError((await client.from('meeting_notes').delete().in('id', ids)).error);
-      assert.ifError((await client.from('meeting_api_keys').delete().in('id', keys)).error);
+      cleanupLocalRows('meeting_notes', ids);
+      cleanupLocalRows('meeting_api_keys', keys);
     }
   } finally { server.stop(); }
 }

@@ -13,7 +13,7 @@ export function meetingApiKeyHashFromHeader(header) {
   return match && keyPattern.test(match[1]) ? hashMeetingApiKey(match[1]) : null;
 }
 
-/** Only trusted server operators can call these helpers with a service-role client. */
+/** Only trusted Teams operators can call these helpers with a teams_runtime client. */
 export async function issueMeetingApiKey(client, name, days = 90) {
   if (typeof name !== 'string' || !name.trim() || name.trim().length > 80) throw new Error('키 이름은 1~80자여야 합니다.');
   if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error('유효 기간은 1~365일이어야 합니다.');

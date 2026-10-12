@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
 import { issueMeetingApiKey, setMeetingApiKeyRole, revokeMeetingApiKey } from '../src/lib/server/meeting-api-keys.mjs';
-import { localEnvironment, startServer } from './helpers/local-server.mjs';
+import { cleanupLocalRows, localEnvironment, runtimeClient, startServer } from './helpers/local-server.mjs';
 const local=localEnvironment();assert.ok(['localhost','127.0.0.1'].includes(new URL(local.url).hostname));
-const db=createClient(local.url,local.key);const server=await startServer(4352,local);
+const db=runtimeClient(local);const server=await startServer(4352,local);
 const keys=[],notes=[],tickets=[];const prefix=`admin-test-${randomUUID()}`;
 const req=(path,method='GET',body,key,requestId=randomUUID())=>fetch(server.base+path,{method,headers:{'Content-Type':'application/json',...(key?{Authorization:`Bearer ${key}`} : {}),'Idempotency-Key':requestId},...(body===undefined?{}:{body:JSON.stringify(body)})});
 async function check(response,status,code){assert.equal(response.status,status,await response.clone().text());const body=status===204?null:await response.json();if(code)assert.equal(body.error.code,code);return body;}
@@ -76,8 +75,8 @@ try{
  const raw=await db.rpc('read_agent_api',{p_key_hash:createHash('sha256').update(manager.key).digest('hex'),p_resource:'tickets'});assert.equal(raw.data.error,'invalid_api_key');
  console.log('Teams 관리자 API: 권한·조회·OPTIONS·부분 수정·재시도·강등·만료·폐기·키 값 보존 PASS');
 } finally {
- for(const id of notes)await db.from('meeting_notes').delete().eq('id',id);
- for(const id of tickets)await db.from('tickets').delete().eq('id',id);
- for(const id of keys)await db.from('meeting_api_keys').delete().eq('id',id);
+ cleanupLocalRows('meeting_notes',notes);
+ cleanupLocalRows('tickets',tickets);
+ cleanupLocalRows('meeting_api_keys',keys);
  server.stop();
 }

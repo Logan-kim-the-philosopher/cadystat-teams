@@ -16,10 +16,14 @@ try {
     }
     if (command !== 'issue' && (values.name || values.days)) throw new Error('--name과 --days는 issue에서만 사용합니다.');
     if (command !== 'set-role' && values.role) throw new Error('--role은 set-role에서만 사용합니다.');
-    const url = process.env.CODY_STAT_SUPABASE_URL;
-    const secret = process.env.CODY_STAT_SUPABASE_SERVICE_ROLE_KEY;
-    if (!url || !secret) throw new Error('운영자용 Supabase 서버 환경변수가 필요합니다.');
-    const client = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const url = process.env.TEAMS_SUPABASE_URL;
+    const publishableKey = process.env.TEAMS_SUPABASE_PUBLISHABLE_KEY;
+    const accessToken = process.env.TEAMS_SUPABASE_ACCESS_TOKEN;
+    if (!url || !publishableKey || !accessToken) throw new Error('Teams 운영자용 Supabase 서버 환경변수가 필요합니다.');
+    const client = createClient(url, publishableKey, {
+      accessToken: async () => accessToken,
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
     const result = command === 'issue' ? await issueMeetingApiKey(client, values.name, values.days === undefined ? 90 : Number(values.days))
       : command === 'list' ? await listMeetingApiKeys(client) : command === 'set-role' ? await setMeetingApiKeyRole(client, id, values.role) : await revokeMeetingApiKey(client, id);
     if (command === 'issue') console.error('키 원문은 이번 출력에서만 확인할 수 있습니다. 발급 대상에게 안전하게 전달하세요.');

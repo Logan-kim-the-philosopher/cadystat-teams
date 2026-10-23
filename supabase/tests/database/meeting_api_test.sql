@@ -1,0 +1,16 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select plan(11);
+select ok(not has_function_privilege('anon', 'public.save_meeting_note(text,date,text,text,uuid[],uuid)', 'EXECUTE'), 'anon은 회의 저장을 실행할 수 없다');
+select ok(has_function_privilege('teams_runtime', 'public.save_meeting_note(text,date,text,text,uuid[],uuid)', 'EXECUTE'), 'Teams 서버는 회의 저장을 실행할 수 있다');
+select ok(not has_function_privilege('authenticated', 'public.add_meeting_comment(uuid,text,text)', 'EXECUTE'), '일반 인증 사용자는 댓글 RPC를 실행할 수 없다');
+select lives_ok($$ select public.save_meeting_note('pgTAP 회의', '2026-09-15', '# 결정', 'draft', array[(select id from public.tickets limit 1)]) $$, '회의와 티켓을 함께 생성한다');
+select is((select count(*)::integer from public.meeting_note_tickets l join public.meeting_notes n on n.id=l.meeting_note_id where n.title='pgTAP 회의'), 1, '티켓 연결이 저장된다');
+select throws_ok($$ select public.save_meeting_note('잘못된 수정', '2026-09-15', '', 'published', array['ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid], (select id from public.meeting_notes where title='pgTAP 회의')) $$, 'P0001', '연결 티켓을 찾을 수 없습니다.', '없는 티켓 저장을 거절한다');
+select ok(exists(select 1 from public.meeting_notes where title='pgTAP 회의'), '실패한 저장은 제목을 변경하지 않는다');
+select lives_ok($$ select public.save_meeting_note('pgTAP 회의', '2026-09-15', '수정', 'published', '{}', (select id from public.meeting_notes where title='pgTAP 회의')) $$, '회의 상태와 연결을 수정한다');
+select is((select count(*)::integer from public.meeting_note_tickets l join public.meeting_notes n on n.id=l.meeting_note_id where n.title='pgTAP 회의'), 0, '연결 티켓 제거가 저장된다');
+select lives_ok($$ select public.add_meeting_comment((select id from public.meeting_notes where title='pgTAP 회의'), '통합 의견', 'pgTAP') $$, '회의 댓글을 저장한다');
+select ok(exists(select 1 from public.meeting_comments where author='pgTAP' and body='통합 의견'), '댓글 본문이 저장된다');
+select * from finish();
+rollback;

@@ -1,0 +1,20 @@
+---
+import { OrganizationFlow } from '../../../features/teams/components/organization-flow';
+import type { OrganizationSnapshot } from '../../../features/teams/domain/organization';
+import { listOrganization } from '../../../features/teams/server/organization-repository';
+import TeamsLayout from '../../../layouts/TeamsLayout.astro';
+
+let snapshot: OrganizationSnapshot | null = null;
+try {
+  snapshot = await listOrganization();
+} catch (error) {
+  Astro.response.status = 503;
+  console.error('[teams/organization] failed to render organization', error);
+}
+---
+
+<TeamsLayout title="조직도 · Codystat-Teams" description="Teams 조직과 구성원 관계" fullBleed>
+  <div class="relative">
+    {snapshot ? <OrganizationFlow client:load initialSnapshot={snapshot} /> : <div role="alert" class="m-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">조직 데이터를 불러오지 못했습니다. 페이지를 새로고침해 주세요.</div>}
+  </div>
+</TeamsLayout>

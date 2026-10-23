@@ -1,0 +1,18 @@
+begin;
+select plan(14);
+select has_column('public','meeting_api_keys','role','키 역할 컬럼');
+select col_default_is('public','meeting_api_keys','role','writer','일반 키가 기본값');
+select ok((select relrowsecurity from pg_class where oid='public.ticket_api_mutations'::regclass),'티켓 재시도 RLS');
+select ok((select relrowsecurity from pg_class where oid='public.meeting_api_key_role_events'::regclass),'역할 이력 RLS');
+select ok(not has_table_privilege('anon','public.ticket_api_mutations','select'),'anon 티켓 재시도 조회 금지');
+select ok(not has_table_privilege('authenticated','public.meeting_api_key_role_events','select'),'로그인 역할 변경 이력 조회 금지');
+select ok(not has_function_privilege('anon','public.set_meeting_api_key_role(uuid,text)','execute'),'anon 승격 금지');
+select ok(not has_function_privilege('authenticated','public.set_meeting_api_key_role(uuid,text)','execute'),'로그인 승격 금지');
+select ok(has_function_privilege('teams_runtime','public.set_meeting_api_key_role(uuid,text)','execute'),'Teams 운영자만 승격 가능');
+select ok(not has_function_privilege('anon','public.read_agent_api(text,text,text,integer,integer,text)','execute'),'anon 직접 조회 RPC 금지');
+select ok(not has_function_privilege('authenticated','public.mutate_agent_ticket(text,text,text,text,text,jsonb)','execute'),'로그인 직접 티켓 변경 금지');
+select ok(not has_function_privilege('anon','public.authorize_agent_api_key(text,boolean)','execute'),'직접 키 검증 RPC 금지');
+select ok(not has_function_privilege('anon','public.agent_ticket_json(public.tickets,boolean)','execute'),'직접 티켓 상세 함수 금지');
+select ok(has_function_privilege('teams_runtime','public.read_agent_api(text,text,text,integer,integer,text)','execute'),'Teams 서버 조회 RPC 허용');
+select * from finish();
+rollback;

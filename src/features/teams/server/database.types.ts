@@ -261,6 +261,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           meeting_date: string
+          next_meeting_at: string | null
           status: string
           title: string
           updated_at: string
@@ -271,6 +272,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           meeting_date: string
+          next_meeting_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -281,6 +283,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           meeting_date?: string
+          next_meeting_at?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -644,7 +647,7 @@ export type Database = {
         }
         Returns: Json
       }
-      delete_organization_team: { Args: { p_team_id: string }; Returns: Json }
+      delete_organization_team: { Args: { p_team_id: string; p_ticket_action: string | null }; Returns: Json }
       delete_ticket: { Args: { p_ticket_number: string }; Returns: Json }
       mutate_agent_meeting: {
         Args: {

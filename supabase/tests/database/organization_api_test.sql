@@ -5,7 +5,7 @@ create extension if not exists pgtap with schema extensions;
 select plan(10);
 
 select has_function('public', 'create_organization_team', array['text', 'uuid', 'text', 'text', 'text'], '팀 생성 RPC가 존재한다');
-select has_function('public', 'delete_organization_team', array['uuid'], '팀 삭제 RPC가 존재한다');
+select has_function('public', 'delete_organization_team', array['uuid', 'text'], '티켓 처리 방식을 받는 팀 삭제 RPC가 존재한다');
 select ok(not has_function_privilege('anon', 'public.create_organization_team(text,uuid,text,text,text)', 'EXECUTE'), 'anon은 팀 생성 RPC를 실행할 수 없다');
 select ok(has_function_privilege('teams_runtime', 'public.create_organization_team(text,uuid,text,text,text)', 'EXECUTE'), 'teams_runtime은 팀 생성 RPC를 실행할 수 있다');
 

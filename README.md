@@ -40,7 +40,11 @@ TEAMS_SUPABASE_ACCESS_TOKEN=
 
 Teams 애플리케이션에는 공용 `service_role` key를 주입하지 않습니다. `TEAMS_SUPABASE_ACCESS_TOKEN`은 RLS를 우회하지 않는 `teams_runtime` 역할 전용 JWT여야 하며, 서버 시작 시 역할을 확인합니다. access token에 `PUBLIC_` 접두사를 붙이거나 브라우저 bundle·로그에 원문을 넣지 않습니다.
 
-`PUBLIC_CODY_STAT_HOME_URL`은 헤더의 “서비스” 링크가 돌아갈 Cody Stat Playground 주소입니다. 기본값은 `https://codystat.com/`입니다.
+`PUBLIC_CODY_STAT_HOME_URL`은 헤더의 “Cody Stat” 링크가 이동할 Playground 주소입니다. 기본값은 `https://codystat.com/`입니다.
+
+## 인증 경계
+
+현재 앱은 사용자 로그인을 직접 검증하지 않습니다. middleware는 cross-origin 변경 요청만 거부하며, `/api/teams/*` 변경 API는 앱 안에서 익명 접근을 허용합니다. 따라서 `/teams/*`와 `/api/teams/*`는 배포 Gateway로 보호하고, Astro origin에 Gateway를 우회해 직접 접근할 수 없게 해야 합니다. `/api/v1/*`의 API key 인증은 별도 경계이며 브라우저 API 인증을 대신하지 않습니다. 배포 전 Gateway 경로와 origin 제한을 확인하세요. Codyspace SSO는 연동 계약이 확정될 때까지 별도로 보류합니다.
 
 ## 검증
 
@@ -90,4 +94,4 @@ npm run meeting-keys -- revoke <키-ID>
 
 Teams DB 변경은 이 저장소의 `supabase/migrations`에만 추가합니다. 2025년 migration 시도와 SQLite 문서는 `docs/legacy`에 감사 자료로 보존하며 현재 실행 경로에서는 사용하지 않습니다. 운영 DB에는 `reset`이나 개발 seed를 실행하지 않습니다.
 
-데이터 무손실 전환과 rollback 절차는 Cody Stat의 `docs/runbooks/teams-data-separation.md`를 따릅니다.
+용재님과의 DB·SSO 협의는 [Teams 협업 착수 안내](docs/runbooks/teams-collaboration-handoff.md)부터 시작하세요. 데이터 분리 전환·검증·복구 절차는 [Teams 데이터 분리 runbook](docs/runbooks/teams-data-separation.md)을 따릅니다. 두 문서 모두 절차 안내이며 운영 DB 변경이나 데이터 이전을 승인하지 않습니다.

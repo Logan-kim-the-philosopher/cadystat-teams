@@ -1,6 +1,6 @@
 import { formatTimestamp } from '../../../lib/platform/time.mjs';
 import * as React from 'react';
-import { ExternalLink, MessageSquarePlus, Pencil, Send, ShieldCheck } from 'lucide-react';
+import { Check, ExternalLink, MessageSquarePlus, Pencil, Send } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../../components/ui/dialog';
@@ -105,7 +105,7 @@ export function TicketDetail({ ticketNumber, onClose, onEdit, onChanged, readOnl
             <div className="mt-5 flex flex-wrap gap-2"><Badge variant={ticket.status === '완료' ? 'green' : ticket.status === '배정' ? 'amber' : 'blue'}>{ticket.status}</Badge><Badge variant="outline">{ticket.typeName}</Badge><Badge variant="outline">{ticket.teamName ?? '미배정'}</Badge><Badge variant="outline">{ticket.assigneeName ?? '담당자 없음'}</Badge></div>
             <p className="mt-6 whitespace-pre-wrap rounded-2xl bg-slate-50 p-5 text-sm leading-7 text-slate-700">{ticket.description}</p>
             {!readOnly ? <div className="mt-5 flex gap-2">
-              {ticket.status === '배정' ? <Button disabled={submitting} onClick={() => transition('완료')}><ShieldCheck size={15} className="mr-1" />완료 처리</Button> : null}
+              {ticket.status === '배정' ? <Button disabled={submitting} onClick={() => transition('완료')}><Check size={15} className="mr-1" />완료 처리</Button> : null}
             </div> : null}
             {error ? <p role="alert" className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
             <div className="mt-8 grid gap-6 lg:grid-cols-2">

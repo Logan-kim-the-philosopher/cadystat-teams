@@ -423,6 +423,8 @@ export function OrganizationFlow({ initialSnapshot }: OrganizationFlowProps) {
   const [editingMember, setEditingMember] = React.useState<OrgMember | null>(null);
   const [draftMembers, setDraftMembers] = React.useState<Record<string, OrgMember[]>>({});
   const [isOrganizationSaving, setIsOrganizationSaving] = React.useState(false);
+  const [teamDeletePrompt, setTeamDeletePrompt] = React.useState<{ unit: OrgUnit; ticketCount: number } | null>(null);
+  const [isDeletingTeam, setIsDeletingTeam] = React.useState(false);
 
   React.useEffect(() => {
     let active = true;
@@ -469,9 +471,48 @@ export function OrganizationFlow({ initialSnapshot }: OrganizationFlowProps) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const response = await fetch('/api/teams/organization', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.fromEntries(form)) });
-    if (!response.ok) { window.alert('팀 생성에 실패했습니다.'); return; }
+    if (!response.ok) {
+      const detail = await response.json().catch(() => null);
+      window.alert(`팀 생성에 실패했습니다.\n${detail?.error ?? '알 수 없는 오류'}`);
+      return;
+    }
     setIsTeamDialogOpen(false);
     setPlaneUnits(null); setOrganizationRefresh((value) => value + 1);
+  }
+  async function executeTeamDeletion(unit: OrgUnit, ticketAction: 'delete' | 'reset' | null) {
+    setIsDeletingTeam(true);
+    try {
+      const query = new URLSearchParams({ id: unit.id });
+      if (ticketAction) query.set('ticketAction', ticketAction);
+      const response = await fetch(`/api/teams/organization?${query}`, { method: 'DELETE' });
+      const detail = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(detail?.error ?? `HTTP ${response.status}`);
+      setTeamDeletePrompt(null);
+      setEditingUnit(null);
+      setPlaneUnits(null);
+      setOrganizationRefresh((value) => value + 1);
+    } catch (error) {
+      window.alert(`팀 삭제에 실패했습니다.\n${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    } finally {
+      setIsDeletingTeam(false);
+    }
+  }
+  async function requestTeamDeletion(unit: OrgUnit) {
+    try {
+      const response = await fetch(`/api/teams/organization?id=${encodeURIComponent(unit.id)}`);
+      const detail = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(detail?.error ?? `HTTP ${response.status}`);
+      const ticketCount = detail?.linkedTicketCount;
+      if (!Number.isInteger(ticketCount) || ticketCount < 0) throw new Error('연결 티켓 수 응답이 올바르지 않습니다.');
+      if (ticketCount > 0) {
+        setTeamDeletePrompt({ unit, ticketCount });
+        return;
+      }
+      if (!window.confirm(`${unit.name} 팀을 삭제할까요? 팀원 정보도 삭제됩니다.`)) return;
+      await executeTeamDeletion(unit, null);
+    } catch (error) {
+      window.alert(`팀 삭제를 준비하지 못했습니다.\n${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
   }
   const { nodes, edges } = React.useMemo(() => buildGraph(canvasUnits), [canvasUnits]);
 
@@ -550,8 +591,29 @@ export function OrganizationFlow({ initialSnapshot }: OrganizationFlowProps) {
           <form role="dialog" aria-modal="true" aria-labelledby="organization-team-editor-title" className="flex w-full max-w-2xl min-h-[620px] max-h-[90vh] flex-col overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" onChange={() => setIsTeamDirty(true)} onSubmit={async (event) => { event.preventDefault(); if (isOrganizationSaving) return; setIsOrganizationSaving(true); const form = new FormData(event.currentTarget); const original = editingUnit.people; const draft = draftMembers[editingUnit.id] ?? original; const members = [...draft.map((member) => ({ id: member.id.replace(/^draft-/, ''), name: member.name, title: member.title, gender: member.gender, action: member.id.startsWith('draft-') ? 'create' : 'update' })), ...original.filter((member) => !draft.some((next) => next.id === member.id)).map((member) => ({ id: member.id, action: 'delete' }))]; const response = await fetch('/api/teams/organization', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId: editingUnit.id, name: form.get('name'), leadMemberId: String(form.get('leadMemberId') ?? editingUnit.leadMemberId ?? '').replace(/^draft-/, ''), members }) }); if (!response.ok) { const detail = await response.json().catch(() => ({})); window.alert(detail.error ?? '팀 저장에 실패했습니다.'); setIsOrganizationSaving(false); return; } setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); setIsOrganizationSaving(false); }}>
             <div className="mb-6"><h2 id="organization-team-editor-title" className="text-lg font-bold text-slate-900">팀 편집</h2></div>
             <div className="space-y-4"><label className="block text-sm font-medium text-slate-700">팀 이름<input name="name" defaultValue={editingUnit.name} className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5" /></label>{editingUnit.name !== '운영진' ? <label className="block text-sm font-medium text-slate-700">팀장<select name="leadMemberId" defaultValue={editingUnit.leadMemberId ?? ''} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="">팀장을 선택하세요</option>{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <option key={person.id} value={person.id}>{person.name} · {person.title}</option>)}</select></label> : null}<div><div className="mb-2 flex items-center justify-between"><p className="text-sm font-semibold text-slate-800">팀원 ({(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).length})</p><button type="button" onClick={() => setIsMemberDialogOpen(true)} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200">+ 팀원 추가</button></div><div className="max-h-80 space-y-2 overflow-y-auto">{(renderedUnits.find((unit) => unit.id === editingUnit.id)?.people ?? editingUnit.people).map((person) => <div key={person.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2"><div><p className="text-sm font-medium text-slate-800">{person.name}</p><p className="text-xs text-slate-500">{person.title}</p></div><div className="flex items-center gap-1"><button type="button" aria-label={`${person.name} 편집`} title="편집" onClick={() => setEditingMember(person)} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"><Pencil size={14} aria-hidden="true" /></button><button type="button" aria-label={`${person.name} 삭제`} title="삭제" onClick={() => { if (!window.confirm(`${person.name} 구성원을 삭제할까요?`)) return; setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: (drafts[editingUnit.id] ?? editingUnit.people).filter((member) => member.id !== person.id) })); setIsTeamDirty(true); }} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-red-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} aria-hidden="true" /></button></div></div>)}</div></div></div>
-            <div className="mt-auto pt-6 flex items-center justify-between gap-2"><button type="button" onClick={async () => { if (!window.confirm(`${editingUnit.name} 팀을 삭제할까요? 팀원과 연결된 데이터가 정리됩니다.`)) return; const response = await fetch(`/api/teams/organization?id=${encodeURIComponent(editingUnit.id)}`, { method: 'DELETE' }); if (!response.ok) { const detail = await response.text(); window.alert(`팀 삭제에 실패했습니다.\n${detail}`); return; } setEditingUnit(null); setPlaneUnits(null); setOrganizationRefresh((value) => value + 1); }} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50">팀 삭제</button><div className="flex gap-2"><button type="button" onClick={() => { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); }} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" disabled={!isTeamDirty || isOrganizationSaving} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">저장</button></div></div>
+            <div className="mt-auto pt-6 flex items-center justify-between gap-2"><button type="button" onClick={() => void requestTeamDeletion(editingUnit)} disabled={isDeletingTeam} className="rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50">팀 삭제</button><div className="flex gap-2"><button type="button" onClick={() => { setDraftMembers((drafts) => { const next = { ...drafts }; delete next[editingUnit.id]; return next; }); setEditingUnit(null); }} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">취소</button><button type="submit" disabled={!isTeamDirty || isOrganizationSaving} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">저장</button></div></div>
           </form>
+        </div>
+      ) : null}
+      {teamDeletePrompt ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="team-delete-title" aria-describedby="team-delete-description" className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 id="team-delete-title" className="text-lg font-bold text-slate-900">{teamDeletePrompt.unit.name} 팀과 연결된 티켓</h2>
+            <p id="team-delete-description" className="mt-2 text-sm text-slate-600">연결된 티켓 {teamDeletePrompt.ticketCount}개를 어떻게 처리할지 선택해 주세요.</p>
+            <div className="mt-5 space-y-3">
+              <button type="button" disabled={isDeletingTeam} onClick={() => void executeTeamDeletion(teamDeletePrompt.unit, 'delete')} className="w-full rounded-xl border border-red-200 p-4 text-left hover:bg-red-50 disabled:opacity-50">
+                <span className="block font-semibold text-red-700">티켓과 기록도 영구 삭제</span>
+                <span className="mt-1 block text-sm text-slate-600">티켓, 댓글, 변경 이력과 회의록에 연결된 티켓 정보가 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다.</span>
+              </button>
+              <button type="button" disabled={isDeletingTeam} onClick={() => void executeTeamDeletion(teamDeletePrompt.unit, 'reset')} className="w-full rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50 disabled:opacity-50">
+                <span className="block font-semibold text-slate-900">티켓을 신규 미배정으로 보존</span>
+                <span className="mt-1 block text-sm text-slate-600">팀과 담당자를 비우고 상태를 신규로 바꿉니다. 댓글과 기존 이력은 보존하고 팀 삭제 이력을 추가합니다.</span>
+              </button>
+            </div>
+            <div className="mt-5 flex justify-end">
+              <button type="button" disabled={isDeletingTeam} onClick={() => setTeamDeletePrompt(null)} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50">취소</button>
+            </div>
+          </section>
         </div>
       ) : null}
       {editingMember ? (<div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/20 p-4"><form role="dialog" aria-modal="true" aria-label="조직 구성원 편집" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onSubmit={(event) => { event.preventDefault(); const form = new FormData(event.currentTarget); if (editingUnit) setDraftMembers((drafts) => ({ ...drafts, [editingUnit.id]: (drafts[editingUnit.id] ?? editingUnit.people).map((member) => member.id === editingMember.id ? { ...member, name: String(form.get('name')), title: String(form.get('title')), gender: form.get('gender') as 'male' | 'female' } : member) })); setEditingMember(null); setIsTeamDirty(true); }}><h2 className="text-lg font-bold">구성원 편집</h2><div className="mt-5 space-y-4"><label className="block text-sm font-medium">이름<input required name="name" defaultValue={editingMember.name} className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">직책<input required name="title" defaultValue={editingMember.title} className="mt-1.5 w-full rounded-xl border px-3 py-2.5" /></label><label className="block text-sm font-medium">성별<select name="gender" defaultValue={editingMember.gender} className="mt-1.5 w-full rounded-xl border bg-white px-3 py-2.5"><option value="male">남성</option><option value="female">여성</option></select></label></div><div className="mt-6 flex justify-end gap-2"><button type="button" onClick={() => setEditingMember(null)} className="rounded-xl px-4 py-2.5">취소</button><button className="rounded-xl bg-slate-900 px-4 py-2.5 font-semibold text-white">변경</button></div></form></div>) : null}

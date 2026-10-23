@@ -18,7 +18,7 @@ function sql(database, statement) {
 }
 function snapshot(database) {
   const rows = tables.map((table) => JSON.parse(sql(database, `select jsonb_build_object('table','${table}','count',count(*),'hash',md5(coalesce(string_agg(to_jsonb(t)::text, '' order by to_jsonb(t)::text),''))) from public.${table} t;`)));
-  const security = JSON.parse(sql(database, "select jsonb_build_object('rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity),'constraints',(select count(*) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public'),'anonRead',has_table_privilege('anon','public.teams','SELECT'),'serviceRead',has_table_privilege('service_role','public.teams','SELECT'),'runtimeRead',has_table_privilege('teams_runtime','public.teams','SELECT'),'runtimeWrite',has_function_privilege('teams_runtime','public.save_meeting_note(text,date,text,text,uuid[],uuid)','EXECUTE'),'runtimeBypass',(select rolbypassrls from pg_roles where rolname='teams_runtime'));"));
+  const security = JSON.parse(sql(database, "select jsonb_build_object('rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity),'constraints',(select count(*) from pg_constraint c join pg_namespace n on n.oid=c.connamespace where n.nspname='public'),'anonRead',has_table_privilege('anon','public.teams','SELECT'),'serviceRead',has_table_privilege('service_role','public.teams','SELECT'),'runtimeRead',has_table_privilege('teams_runtime','public.teams','SELECT'),'runtimeWrite',has_function_privilege('teams_runtime','public.save_meeting_note(text,date,text,text,uuid[],uuid)','EXECUTE'),'runtimeDeleteLegacy',has_function_privilege('teams_runtime','public.delete_organization_team(uuid)','EXECUTE'),'runtimeDeleteChoice',has_function_privilege('teams_runtime','public.delete_organization_team(uuid,text)','EXECUTE'),'serviceDeleteLegacy',has_function_privilege('service_role','public.delete_organization_team(uuid)','EXECUTE'),'serviceDeleteChoice',has_function_privilege('service_role','public.delete_organization_team(uuid,text)','EXECUTE'),'runtimeBypass',(select rolbypassrls from pg_roles where rolname='teams_runtime'));"));
   const sequence = sql(database, 'select last_value,is_called from public.ticket_number_seq;');
   return { rows, security, sequence };
 }
@@ -30,6 +30,10 @@ try {
   assert.equal(before.security.serviceRead, false);
   assert.equal(before.security.runtimeRead, true);
   assert.equal(before.security.runtimeWrite, true);
+  assert.equal(before.security.runtimeDeleteLegacy, true);
+  assert.equal(before.security.runtimeDeleteChoice, true);
+  assert.equal(before.security.serviceDeleteLegacy, false);
+  assert.equal(before.security.serviceDeleteChoice, false);
   assert.equal(before.security.runtimeBypass, false);
   const dump = docker(['exec', container, 'pg_dump', '-U', 'postgres', '-d', 'postgres', '--format=custom', '--schema=public', '--no-owner']);
   assert.ok(dump.length > 0);
@@ -52,8 +56,13 @@ try {
   assert.equal(rolledBack.security.serviceRead, true);
   assert.equal(rolledBack.security.runtimeRead, false);
   assert.equal(rolledBack.security.runtimeWrite, false);
+  assert.equal(rolledBack.security.runtimeDeleteLegacy, false);
+  assert.equal(rolledBack.security.runtimeDeleteChoice, false);
+  assert.equal(rolledBack.security.serviceDeleteLegacy, true);
+  assert.equal(rolledBack.security.serviceDeleteChoice, true);
   sql(restoreDb, await readFile(`${root}supabase/migrations/20261012090000_transfer_teams_runtime_access.sql`, 'utf8'));
-  assert.deepEqual(snapshot(restoreDb), afterTests, 'rollback 뒤 전용 역할 migration을 재적용할 수 있다');
+  sql(restoreDb, await readFile(`${root}supabase/migrations/20261014090000_team_deletion_ticket_strategy.sql`, 'utf8'));
+  assert.deepEqual(snapshot(restoreDb), afterTests, 'rollback 뒤 runtime 권한과 팀 삭제 RPC를 재적용할 수 있다');
   assert.deepEqual(snapshot('postgres'), before, '원본 개발 DB는 백업·복구 검증 중 변경하지 않는다');
   console.log(`development export/restore/role rollback: PASS (${tables.length} tables, data hashes, constraints, RLS, grants, sequence, ${tapTests} restored pgTAP tests)`);
 } finally {

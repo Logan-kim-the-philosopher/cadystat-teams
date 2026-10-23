@@ -43,3 +43,17 @@ test('ticket editor and detail expose accessible dialogs and normalized statuses
   assert.match(domain, /\['신규', '배정', '완료'\]/);
   assert.doesNotMatch(`${editor}\n${detail}`, /진행 중|보류|담당 배정/);
 });
+
+test('ticket board sorts by latest activity and uses the check icon for completion', async () => {
+  const [board, detail] = await Promise.all([
+    read('src/features/teams/components/ticket-board.tsx'),
+    read('src/features/teams/components/ticket-detail.tsx')
+  ]);
+
+  assert.match(board, /incomingTickets = React\.useMemo/);
+  assert.match(board, /updatedAt \|\| left\.createdAt/);
+  assert.match(board, /updatedAt \|\| right\.createdAt/);
+  assert.match(board, /filter\(\(ticket\) => ticket\.status === '신규' && !ticket\.teamId\)/);
+  assert.match(detail, /import \{ Check,/);
+  assert.match(detail, /<Check size=\{15\} className="mr-1" \/>완료 처리/);
+});

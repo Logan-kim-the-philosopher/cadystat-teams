@@ -19,7 +19,7 @@ if (!note) Astro.response.status = failed ? 503 : 404;
     <article class="mx-auto max-w-4xl pb-16">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <a href="/teams/meetings" class="text-base font-medium text-muted-foreground transition hover:text-foreground">← 뒤로가기</a>
-        <nav aria-label="breadcrumb" class="hidden items-center gap-2 text-sm text-muted-foreground sm:flex"><a href="/teams" class="hover:text-foreground">Teams</a><span>/</span><a href="/teams/meetings" class="hover:text-foreground">회의록</a><span>/</span><span class="max-w-48 truncate text-foreground">{note.title}</span></nav>
+        <nav aria-label="breadcrumb" class="hidden items-center gap-2 text-sm text-muted-foreground sm:flex"><a href="/teams/meetings" class="hover:text-foreground">Teams</a><span>/</span><a href="/teams/meetings" class="hover:text-foreground">회의록</a><span>/</span><span class="max-w-48 truncate text-foreground">{note.title}</span></nav>
       </div>
       <header class="mt-4 border-b border-border pb-8">
         <div class="flex flex-wrap items-start justify-between gap-4"><div><h1 class="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{note.title}</h1><div class="mt-5 flex flex-wrap items-center gap-2"><Badge variant="outline">{note.date}</Badge><Badge variant="outline">{meetingStatusLabel[note.status]}</Badge><Badge variant="outline">댓글 {note.comments.length}</Badge></div></div><MeetingBrowser client:load workspace={workspace} editing={note} /></div>

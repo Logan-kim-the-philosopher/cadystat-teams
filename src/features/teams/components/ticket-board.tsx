@@ -37,6 +37,10 @@ export function TicketBoard({ initialWorkspace, readOnly = false }: TicketBoardP
     });
   }, [query, statusFilter, teamFilter, workspace.tickets]);
 
+  const incomingTickets = React.useMemo(() => visibleTickets
+    .filter((ticket) => ticket.status === '신규' && !ticket.teamId)
+    .sort((left, right) => new Date(right.updatedAt || right.createdAt).getTime() - new Date(left.updatedAt || left.createdAt).getTime()), [visibleTickets]);
+
   async function refresh() {
     setRefreshing(true);
     setError(null);
@@ -154,7 +158,7 @@ export function TicketBoard({ initialWorkspace, readOnly = false }: TicketBoardP
         </div>
       ) : (
         <div className="grid min-h-[32rem] gap-3 lg:h-[calc(100vh-17rem)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,2fr)]">
-          <section {...dropProps} onDragEnter={() => { if (!readOnly) setDragOverTeam('incoming'); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragOverTeam(null); }} onDrop={(event) => dropOnTeam(null, event)} className={`flex min-h-[20rem] min-w-0 flex-col overflow-hidden rounded-xl border-2 p-3 shadow-sm transition ${dragOverTeam === 'incoming' ? 'border-blue-500 bg-blue-100 ring-4 ring-blue-500/30' : 'border-slate-200 bg-slate-100/90'}`}><header className="mb-3 flex items-center justify-between"><h2 className="font-semibold tracking-tight">신규 티켓</h2><Badge variant="outline">{visibleTickets.filter((ticket) => !ticket.teamId).length}</Badge></header><div className="min-h-0 flex-1 space-y-3 overflow-y-auto">{visibleTickets.filter((ticket) => !ticket.teamId).map((ticket) => <TicketCard ticket={ticket} onOpen={(item) => setSelectedNumber(item.number)} readOnly={readOnly} key={ticket.id} />)}{visibleTickets.every((ticket) => ticket.teamId) ? <p className="rounded-lg border border-dashed bg-white p-4 text-center text-sm text-slate-500">신규 티켓 없음</p> : null}</div></section>
+          <section {...dropProps} onDragEnter={() => { if (!readOnly) setDragOverTeam('incoming'); }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragOverTeam(null); }} onDrop={(event) => dropOnTeam(null, event)} className={`flex min-h-[20rem] min-w-0 flex-col overflow-hidden rounded-xl border-2 p-3 shadow-sm transition ${dragOverTeam === 'incoming' ? 'border-blue-500 bg-blue-100 ring-4 ring-blue-500/30' : 'border-slate-200 bg-slate-100/90'}`}><header className="mb-3 flex items-center justify-between"><h2 className="font-semibold tracking-tight">신규 티켓</h2><Badge variant="outline">{incomingTickets.length}</Badge></header><div className="min-h-0 flex-1 space-y-3 overflow-y-auto">{incomingTickets.map((ticket) => <TicketCard ticket={ticket} onOpen={(item) => setSelectedNumber(item.number)} readOnly={readOnly} key={ticket.id} />)}{incomingTickets.length === 0 ? <p className="rounded-lg border border-dashed bg-white p-4 text-center text-sm text-slate-500">신규 티켓 없음</p> : null}</div></section>
           <section className="flex min-h-[22rem] min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-100/90 p-3 shadow-sm"><header className="mb-3"><h2 className="font-semibold tracking-tight">팀 목록</h2></header><div className="grid min-h-0 flex-1 auto-rows-[12rem] grid-cols-1 gap-3 overflow-y-auto p-2 sm:grid-cols-2">
             {workspace.teams.map((team) => {
               const tickets = visibleTickets.filter((ticket) => ticket.teamId === team.id);

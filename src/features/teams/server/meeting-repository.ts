@@ -4,6 +4,28 @@ import type { MeetingInput, MeetingNote, MeetingStatus, MeetingWorkspace, Recent
 export class MeetingRepositoryError extends Error {}
 function fail(error: { message: string } | null) { if (error) throw new MeetingRepositoryError(error.message); }
 
+export async function getNextMeetingSchedule(): Promise<string | null> {
+  const { data, error } = await getSupabaseServerClient().from('meeting_notes')
+    .select('next_meeting_at').eq('status', 'published').is('deleted_at', null)
+    .order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  fail(error);
+  return data?.next_meeting_at ?? null;
+}
+
+export async function saveNextMeetingSchedule(startsAt: string): Promise<string> {
+  const client = getSupabaseServerClient();
+  const { data: latest, error: lookupError } = await client.from('meeting_notes')
+    .select('id').eq('status', 'published').is('deleted_at', null)
+    .order('meeting_date', { ascending: false }).order('created_at', { ascending: false }).limit(1).maybeSingle();
+  fail(lookupError);
+  if (!latest) throw new MeetingRepositoryError('최근 회의록을 찾을 수 없습니다.');
+  const { data, error } = await client.from('meeting_notes').update({ next_meeting_at: startsAt })
+    .eq('id', latest.id).select('next_meeting_at').single();
+  fail(error);
+  if (!data?.next_meeting_at) throw new MeetingRepositoryError('일정 저장 응답이 없습니다.');
+  return data.next_meeting_at;
+}
+
 export async function listMeetings(): Promise<MeetingWorkspace> {
   const client = getSupabaseServerClient();
   const [notes, links, tickets, comments] = await Promise.all([

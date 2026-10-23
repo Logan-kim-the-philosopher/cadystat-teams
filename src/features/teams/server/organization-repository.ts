@@ -42,6 +42,13 @@ export async function getOrganizationTeam(teamId: string): Promise<OrganizationT
   return snapshot.teams.find((team) => team.id === teamId) ?? null;
 }
 
+export async function countTicketsForTeam(teamId: string): Promise<number> {
+  const client = getSupabaseServerClient();
+  const { count, error } = await client.from('tickets').select('id', { count: 'exact', head: true }).eq('team_id', teamId);
+  fail('팀 티켓 수를 불러오지 못했습니다.', error);
+  return count ?? 0;
+}
+
 export async function createOrganizationTeam(input: CreateOrganizationTeamInput) {
   const client = getSupabaseServerClient();
   const { data, error } = await client.rpc('create_organization_team', {
@@ -79,9 +86,12 @@ export async function updateOrganizationTeam(input: UpdateOrganizationTeamInput)
   return team;
 }
 
-export async function deleteOrganizationTeam(teamId: string) {
+export async function deleteOrganizationTeam(teamId: string, ticketAction: 'delete' | 'reset' | null) {
   const client = getSupabaseServerClient();
-  const { data, error } = await client.rpc('delete_organization_team', { p_team_id: teamId });
+  const { data, error } = await client.rpc('delete_organization_team', {
+    p_team_id: teamId,
+    p_ticket_action: ticketAction
+  });
   fail('팀을 삭제하지 못했습니다.', error);
   rpcId(data, 'teamId');
 }

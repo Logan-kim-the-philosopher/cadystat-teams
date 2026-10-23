@@ -7,6 +7,7 @@ import {
   parseUpdateOrganizationTeamInput
 } from '../../../../features/teams/domain/organization';
 import {
+  countTicketsForTeam,
   createOrganizationTeam,
   deleteOrganizationTeam,
   getOrganizationTeam,
@@ -30,7 +31,7 @@ function errorResponse(error: unknown) {
   if (error instanceof ServerConfigurationError) return Response.json({ error: '개발 데이터 연결 설정이 준비되지 않았습니다.' }, { status: 503 });
   if (error instanceof OrganizationInputError) return Response.json({ error: error.message }, { status: 400 });
   if (error instanceof OrganizationRepositoryError) {
-    const conflict = error.code === '23505' || error.message.includes('하위 팀') || error.message.includes('이미 존재');
+    const conflict = error.code === '23505' || error.message.includes('하위 팀') || error.message.includes('이미 존재') || error.message.includes('연결된 티켓');
     const notFound = error.message.includes('찾을 수 없습니다');
     return Response.json({ error: error.message }, { status: conflict ? 409 : notFound ? 404 : 503 });
   }
@@ -42,8 +43,11 @@ export const GET: APIRoute = async ({ url }) => {
   try {
     const rawId = url.searchParams.get('id');
     if (!rawId) return Response.json(await listOrganization());
-    const team = await getOrganizationTeam(parseOrganizationId(rawId));
-    return team ? Response.json({ team }) : Response.json({ error: '팀을 찾을 수 없습니다.' }, { status: 404 });
+    const teamId = parseOrganizationId(rawId);
+    const team = await getOrganizationTeam(teamId);
+    if (!team) return Response.json({ error: '팀을 찾을 수 없습니다.' }, { status: 404 });
+    const linkedTicketCount = await countTicketsForTeam(teamId);
+    return Response.json({ team, linkedTicketCount });
   } catch (error) {
     return errorResponse(error);
   }
@@ -69,7 +73,14 @@ export const PATCH: APIRoute = async ({ request }) => {
 
 export const DELETE: APIRoute = async ({ url }) => {
   try {
-    await deleteOrganizationTeam(parseOrganizationId(url.searchParams.get('id')));
+    const rawAction = url.searchParams.get('ticketAction');
+    if (rawAction !== null && rawAction !== 'delete' && rawAction !== 'reset') {
+      throw new OrganizationInputError('티켓 처리 방식은 delete 또는 reset이어야 합니다.');
+    }
+    await deleteOrganizationTeam(
+      parseOrganizationId(url.searchParams.get('id')),
+      rawAction === 'delete' || rawAction === 'reset' ? rawAction : null
+    );
     return new Response(null, { status: 204 });
   } catch (error) {
     return errorResponse(error);

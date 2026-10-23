@@ -29,6 +29,8 @@
     "test:ticket-api": "node test/ticket-api.integration.mjs",
     "pretest:meeting-api": "npm run build",
     "test:meeting-api": "node test/meeting-api.integration.mjs",
+    "pretest:meeting-schedule": "npm run build",
+    "test:meeting-schedule": "node test/meeting-schedule.integration.mjs",
     "pretest:meeting-feedback": "npm run build",
     "test:meeting-feedback": "node test/meeting-feedback.integration.mjs",
     "pretest:teams-admin": "npm run build",
@@ -51,6 +53,7 @@
     "marked": "^18.0.12",
     "mermaid": "^11.17.2",
     "react": "^19.2.8",
+    "react-day-picker": "^10.0.2",
     "react-dom": "^19.2.8",
     "sanitize-html": "^2.18.0",
     "tailwind-merge": "^3.6.0"

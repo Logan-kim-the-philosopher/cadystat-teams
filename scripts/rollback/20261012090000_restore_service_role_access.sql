@@ -63,6 +63,7 @@ grant usage, select on sequence public.ticket_number_seq, public.meeting_api_key
 revoke all on function public.save_organization_team(uuid,text,uuid,jsonb) from teams_runtime;
 revoke all on function public.create_organization_team(text,uuid,text,text,text) from teams_runtime;
 revoke all on function public.delete_organization_team(uuid) from teams_runtime;
+revoke all on function public.delete_organization_team(uuid, text) from teams_runtime;
 revoke all on function public.create_ticket(text,text,uuid,uuid,uuid) from teams_runtime;
 revoke all on function public.update_ticket(text,text,text,uuid,text,uuid,uuid) from teams_runtime;
 revoke all on function public.delete_ticket(text) from teams_runtime;
@@ -80,6 +81,7 @@ revoke all on function public.mutate_agent_ticket(text,text,text,text,text,jsonb
 grant execute on function public.save_organization_team(uuid,text,uuid,jsonb) to service_role;
 grant execute on function public.create_organization_team(text,uuid,text,text,text) to service_role;
 grant execute on function public.delete_organization_team(uuid) to service_role;
+grant execute on function public.delete_organization_team(uuid, text) to service_role;
 grant execute on function public.create_ticket(text,text,uuid,uuid,uuid) to service_role;
 grant execute on function public.update_ticket(text,text,text,uuid,text,uuid,uuid) to service_role;
 grant execute on function public.delete_ticket(text) to service_role;

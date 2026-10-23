@@ -1,12 +1,15 @@
 ---
 import TeamsLayout from '../../../layouts/TeamsLayout.astro';
 import { MeetingBrowser } from '../../../features/teams/components/meeting-browser';
+import { NextMeetingBadge } from '../../../features/teams/components/next-meeting-badge';
 import { RecentMeetingComments } from '../../../features/teams/components/recent-meeting-comments';
-import { listMeetings, recentMeetingComments } from '../../../features/teams/server/meeting-repository';
+import { getNextMeetingSchedule, listMeetings, recentMeetingComments } from '../../../features/teams/server/meeting-repository';
 
 let workspace = null;
 try { workspace = await listMeetings(); } catch (error) { Astro.response.status = 503; console.error('[teams/meetings]', error); }
 const latestMeeting = workspace?.notes[0];
+let nextMeeting: string | null = null;
+try { nextMeeting = await getNextMeetingSchedule(); } catch (error) { console.error('[teams/meeting-schedule]', error); }
 let recentComments: Awaited<ReturnType<typeof recentMeetingComments>> = [];
 let recentCommentsError = false;
 try { recentComments = await recentMeetingComments(); } catch { recentCommentsError = true; }
@@ -18,6 +21,7 @@ try { recentComments = await recentMeetingComments(); } catch { recentCommentsEr
     <div class="h-full p-7 sm:p-8">
       <div class="flex h-full flex-col">
         <span class="w-fit rounded-full border border-white/20 px-3 py-1 text-xs text-slate-300">Teams / Meetings</span>
+        <div class="mt-4"><NextMeetingBadge client:load initialValue={nextMeeting} /></div>
         <div class="flex flex-1 flex-col justify-center">
           <h1 class="mt-5 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">대화에서 결정까지,<br />함께 만들고 기록합니다</h1>
           <p class="mt-4 max-w-xl text-base leading-7 text-slate-300">회의의 핵심 맥락과 후속 작업을 연결합니다.</p>

@@ -8,6 +8,19 @@ export type MeetingWorkspace = { notes: MeetingNote[]; tickets: MeetingTicket[] 
 export type MeetingInput = { title: string; date: string; content: string; status: MeetingStatus; ticketIds: string[]; newTickets: MeetingTicketDraft[] };
 export class MeetingInputError extends Error {}
 
+export function meetingScheduleInput(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new MeetingInputError('JSON 객체가 필요합니다.');
+  const startsAt = (value as Record<string, unknown>).starts_at;
+  if (typeof startsAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(startsAt)) {
+    throw new MeetingInputError('올바른 날짜와 시간을 입력하세요.');
+  }
+  const date = new Date(startsAt);
+  if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 19) !== startsAt.slice(0, 19)) {
+    throw new MeetingInputError('올바른 날짜와 시간을 입력하세요.');
+  }
+  return date.toISOString();
+}
+
 export function meetingId(value: unknown): string {
   if (typeof value !== 'string' || !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) throw new MeetingInputError('회의록·티켓 ID 형식이 올바르지 않습니다.');
   return value.toLowerCase();
